@@ -1,0 +1,2555 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<title>Autoclik Bug Hunter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F4EF; --surface:rgba(255,255,255,.82); --surface-2:rgba(33,28,20,.04); --ink:#211C16; --ink-soft:#726B5E;
+    --line:rgba(33,28,20,.10); --accent:#F49800; --accent-ink:#211C16; --accent-soft:rgba(244,152,0,.16);
+    --good:#1F845A; --good-soft:rgba(31,132,90,.13); --warn:#B76E00; --warn-soft:rgba(183,110,0,.14);
+    --muted:#6B6B70; --muted-soft:rgba(107,107,112,.10); --insight:#5E5ADB; --insight-soft:rgba(94,90,219,.12);
+    --info:#0B66C3; --info-soft:rgba(11,102,195,.12); --fixed:#0E8074; --fixed-soft:rgba(14,128,116,.12);
+    --danger:#C9372C; --danger-soft:rgba(201,55,44,.12);
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#18191B; --surface:#232426; --surface-2:#2B2C2F; --ink:#F0F0F1; --ink-soft:#A6A6AC;
+      --line:#38393D; --accent:#FFA824; --accent-ink:#1A1A1A; --accent-soft:#3A2E10;
+      --good:#3FBE85; --good-soft:#123526; --warn:#E0A83C; --warn-soft:#3A2E10;
+      --muted:#96969C; --muted-soft:#303134; --insight:#9997F0; --insight-soft:#26264A;
+      --info:#6FB2F0; --info-soft:#132E4A; --fixed:#4FC9BC; --fixed-soft:#0F332E;
+      --danger:#FF6B5B; --danger-soft:#3A1B17;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#18191B; --surface:#232426; --surface-2:#2B2C2F; --ink:#F0F0F1; --ink-soft:#A6A6AC;
+    --line:#38393D; --accent:#FFA824; --accent-ink:#1A1A1A; --accent-soft:#3A2E10;
+    --good:#3FBE85; --good-soft:#123526; --warn:#E0A83C; --warn-soft:#3A2E10;
+    --muted:#96969C; --muted-soft:#303134; --insight:#9997F0; --insight-soft:#26264A;
+    --info:#6FB2F0; --info-soft:#132E4A; --fixed:#4FC9BC; --fixed-soft:#0F332E;
+    --danger:#FF6B5B; --danger-soft:#3A1B17;
+  }
+  :root{
+    --radius-sm:8px; --radius-md:12px; --radius-lg:18px; --radius-xl:24px; --radius-pill:999px;
+    --shadow-sm:0 1px 3px rgba(33,28,20,.06);
+    --shadow-md:0 10px 28px rgba(33,28,20,.09);
+    --shadow-lg:0 28px 56px rgba(33,28,20,.14);
+    --accent-glow:rgba(244,152,0,.28);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow-md:0 6px 20px rgba(0,0,0,.5); --shadow-lg:0 24px 52px rgba(0,0,0,.6); --accent-glow:rgba(255,168,36,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow-md:0 6px 20px rgba(0,0,0,.5); --shadow-lg:0 24px 52px rgba(0,0,0,.6); --accent-glow:rgba(255,168,36,.28);
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  button{appearance:none; -webkit-appearance:none; font:inherit; color:inherit;}
+  html{margin:0;background:var(--bg);color:var(--ink); overflow-x:hidden;}
+  body{
+    margin:0; color:var(--ink);
+    font-family:"Kanit",system-ui,-apple-system,sans-serif; font-size:14.5px; line-height:1.55; padding:14px 14px 56px; -webkit-font-smoothing:antialiased;
+    background-color:var(--bg); overflow-x:hidden; max-width:100vw;
+  }
+  img{max-width:100%;}
+  h1,h2,h3{font-family:"Kanit",system-ui,sans-serif; font-weight:600; letter-spacing:-.01em; text-wrap:balance; margin:0; color:var(--ink);}
+  .mono{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1180px; margin:0 auto;}
+  a{color:var(--accent);}
+
+  /* utility bar: theme + language */
+  .util-bar{display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+  .util-group{display:flex; gap:2px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:3px; box-shadow:none;}
+  .util-group button{border:0; background:transparent; color:var(--ink-soft); font-size:12px; font-weight:600; padding:6px 11px; border-radius:8px; cursor:pointer; font-family:"IBM Plex Mono",monospace; transition:background .15s ease, color .15s ease;}
+  .util-group button:hover{color:var(--ink); background:var(--surface-2);}
+  .util-group button[aria-pressed="true"]{background:var(--accent); color:#fff; box-shadow:none;}
+
+  .emp-profile-bar{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:14px; box-shadow:none;}
+  .emp-profile-bar span{font-size:13px; color:var(--ink-soft); font-weight:500;}
+  .emp-profile-bar span b{color:var(--ink); font-weight:700;}
+
+  .hero{
+    background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:var(--radius-lg); padding:20px 22px; position:relative; margin-bottom:14px;
+    box-shadow:none; border-left:3px solid var(--accent);
+  }
+  .hero .eyebrow{display:inline-flex; align-items:center; gap:6px; font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; background:var(--accent-soft); color:#8a5600; padding:5px 11px; border-radius:var(--radius-sm); margin-bottom:12px;}
+  :root[data-theme="dark"] .hero .eyebrow, :root:not([data-theme="light"]) .hero .eyebrow{ color:#ffd699; }
+  .hero h1{font-size:clamp(19px,4vw,24px); font-weight:700; letter-spacing:0; text-transform:none;}
+  .hero p{margin:8px 0 0; max-width:56ch; color:var(--ink-soft); font-size:13.5px; font-weight:500;}
+  .hero-meta{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; font-size:11.5px;}
+  .hero-meta > div{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:8px 14px;}
+  .hero-meta b{font-family:"IBM Plex Mono",monospace; font-size:15px; font-weight:600; display:block; margin-top:2px; color:var(--ink);}
+
+  /* Top nav bar + centered "wordmark" hero, AuthKit-composition-inspired */
+  .top-nav{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 4px 14px; flex-wrap:wrap;}
+  .brand{display:flex; align-items:center; gap:9px;}
+  .brand-logo{height:26px; width:auto; display:block; flex:none;}
+  .brand-name{font-weight:700; font-size:14px; letter-spacing:.06em; color:var(--ink); font-family:"IBM Plex Mono",monospace;}
+  .top-nav-right{display:flex; gap:8px; flex-wrap:wrap;}
+
+  .hero-centered{text-align:center; padding:44px 24px 40px;}
+  .hero-centered .eyebrow{margin-left:auto; margin-right:auto;}
+  .hero-title-gradient{
+    font-size:clamp(30px,6vw,46px); font-weight:800; letter-spacing:-.02em;
+    background:linear-gradient(180deg, var(--ink) 10%, var(--accent) 160%);
+    -webkit-background-clip:text; background-clip:text; color:var(--ink); -webkit-text-fill-color:transparent;
+  }
+  .hero-centered p{margin:10px auto 0; max-width:52ch;}
+  .hero-fan{position:relative; display:flex; justify-content:center;}
+  .hero-fan .hero-meta{justify-content:center; margin-top:26px;}
+  .hero-fan .hero-meta > div:nth-child(1){transform:rotate(-2.5deg);}
+  .hero-fan .hero-meta > div:nth-child(2){transform:rotate(2deg);}
+  .hero-fan .hero-meta > div{transition:transform .2s ease;}
+  .hero-fan .hero-meta > div:hover{transform:rotate(0deg) translateY(-2px);}
+  @media (max-width:640px){ .hero-fan .hero-meta > div:nth-child(1), .hero-fan .hero-meta > div:nth-child(2){transform:none;} }
+
+  .role-nav{display:flex; gap:4px; background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-md); padding:4px; margin-bottom:14px; box-shadow:none;}
+  .role-nav button{flex:1; border:0; background:transparent; color:var(--ink-soft); font-family:"Kanit",sans-serif; text-transform:none; letter-spacing:0; font-size:13px; font-weight:600; padding:9px 6px; border-radius:8px; cursor:pointer; transition:background .15s ease, color .15s ease, box-shadow .15s ease;}
+  .role-nav button:hover{color:var(--ink);}
+  .role-nav button[aria-selected="true"]{background:var(--surface); color:var(--accent); box-shadow:var(--shadow-sm); border:1px solid var(--line);}
+
+  .tabs{display:flex; gap:2px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:4px; margin-bottom:16px; overflow-x:auto; box-shadow:none; -webkit-overflow-scrolling:touch; scrollbar-width:none; transition:mask-image .15s ease, -webkit-mask-image .15s ease;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tabs.has-more-end{ -webkit-mask-image:linear-gradient(to right, black 0, black calc(100% - 28px), transparent 100%); mask-image:linear-gradient(to right, black 0, black calc(100% - 28px), transparent 100%); }
+  .tabs.has-more-start{ -webkit-mask-image:linear-gradient(to left, black 0, black calc(100% - 28px), transparent 100%); mask-image:linear-gradient(to left, black 0, black calc(100% - 28px), transparent 100%); }
+  .tabs.has-more-start.has-more-end{ -webkit-mask-image:linear-gradient(to right, transparent 0, black 28px, black calc(100% - 28px), transparent 100%); mask-image:linear-gradient(to right, transparent 0, black 28px, black calc(100% - 28px), transparent 100%); }
+  .tab:hover{color:var(--ink); background:var(--surface-2);}
+  .tab[aria-selected="true"]{background:var(--accent-soft); color:#8a5600; box-shadow:none;}
+  .tab{flex:1 1 auto; white-space:nowrap; border:0; background:transparent; color:var(--ink-soft); font-family:"Kanit",sans-serif; text-transform:none; letter-spacing:0; font-size:13px; padding:9px 12px; border-radius:8px; cursor:pointer; font-weight:600; transition:background .15s ease, color .15s ease, box-shadow .15s ease;}
+
+  /* Desktop: left sidebar navigation for the Employee and Marketing app shells */
+  @media (min-width:881px){
+    #emp-app{display:grid; grid-template-columns:224px 1fr; gap:20px; align-items:start;}
+    #emp-app > .tabs{grid-column:1; grid-row:1; flex-direction:column; align-items:stretch; gap:2px; padding:8px; position:sticky; top:14px; margin-bottom:0;}
+    #emp-app > .tabs .tab{text-align:left; padding:10px 12px; border-left:3px solid transparent;}
+    #emp-app > .tabs .tab[aria-selected="true"]{border-left-color:var(--accent);}
+    #emp-app > .emp-profile-bar{grid-column:1; grid-row:2; flex-direction:column; align-items:stretch; gap:6px; position:sticky; top:230px; margin-bottom:0;}
+    #emp-app > section{grid-column:2; grid-row:1/3;}
+    #mkt-app{display:grid; grid-template-columns:224px 1fr; gap:20px; align-items:start;}
+    #mkt-app > .tabs{grid-column:1; flex-direction:column; align-items:stretch; gap:2px; padding:8px; position:sticky; top:14px; margin-bottom:0;}
+    #mkt-app > .tabs .tab{text-align:left; padding:10px 12px; border-left:3px solid transparent;}
+    #mkt-app > .tabs .tab[aria-selected="true"]{border-left-color:var(--accent);}
+    #mkt-app > section{grid-column:2;}
+    #emp-app > .tabs, #mkt-app > .tabs{ border-radius:var(--radius-lg) !important; }
+    #emp-app > .tabs .tab, #mkt-app > .tabs .tab{ border-radius:var(--radius-sm) !important; }
+  }
+
+  /* Mobile & tablet: comfortable touch targets and single-column layout (phone-first for report submission) */
+  @media (max-width:880px){
+    body{padding:10px 10px 48px; font-size:15px;}
+    .wrap{max-width:100%;}
+    .card{padding:16px; border-radius:var(--radius-md);}
+    .btn{padding:13px 20px; font-size:14px; min-height:46px;}
+    .btn.small{padding:10px 14px; min-height:38px;}
+    .tab{padding:12px 14px; font-size:13px; min-height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:start;}
+    .tabs{scroll-snap-type:x proximity;}
+    .role-nav button{padding:12px 6px; min-height:44px;}
+    .seg button{padding:11px 14px; min-height:42px;}
+    .big-btn{padding:16px; min-height:48px;}
+    .util-group button{padding:9px 12px; min-height:38px;}
+    input[type=text],input[type=url],input[type=date],input[type=tel],textarea,select{padding:12px 13px;}
+    .photo-thumb{width:84px; height:84px;}
+    .photo-thumb button{width:26px; height:26px; top:-8px; right:-8px; font-size:14px;}
+    .form-step{padding:14px;}
+    .filters{flex-direction:column; align-items:stretch;}
+    .filters select{width:100%; padding:11px 12px;}
+    .bar-row .lbl{width:88px; font-size:11px;}
+    .stat-grid{grid-template-columns:repeat(2,1fr); gap:8px;}
+    .admin-controls{grid-template-columns:1fr;}
+    .admin-controls .af-actions{justify-content:stretch;}
+    .admin-controls .af-actions .btn{flex:1;}
+    .hero{padding:16px 16px;}
+    .hero-meta{gap:8px;}
+    .hero-meta > div{padding:7px 12px;}
+  }
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg); padding:20px; margin-bottom:16px;
+    box-shadow:var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  :root[data-theme="dark"] .card, :root:not([data-theme="light"]) .card{ box-shadow:var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.04); }
+  .card h2{font-size:16px; margin-bottom:4px; letter-spacing:0; font-weight:700;}
+  .subtext{color:var(--ink-soft); font-size:13px; margin:0 0 16px;}
+
+  .report-progress-wrap{margin-bottom:18px;}
+  .report-progress-track{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-pill); height:6px; overflow:hidden;}
+  .report-progress-fill{background:var(--accent); height:100%; border-radius:var(--radius-pill); transition:width .3s ease;}
+  .report-progress-label{font-size:11.5px; color:var(--ink-soft); margin-top:6px; font-weight:600;}
+  .form-step{border:1px solid var(--line); border-radius:var(--radius-md); padding:16px; margin-bottom:14px; background:var(--surface-2); transition:border-color .15s ease;}
+  .form-step.is-done{border-color:var(--good);}
+  .form-step-head{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .form-step-num{font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:12.5px; color:var(--accent); background:var(--accent-soft); width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none;}
+  .form-step.is-done .form-step-num{color:#fff; background:var(--good);}
+  .form-step-title{font-weight:700; font-size:14px; color:var(--ink);}
+  .form-step .field:last-child{margin-bottom:0;}
+
+  label{display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin:0 0 7px;}
+  .field{margin-bottom:15px;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+  @media (max-width:640px){.row2,.row3{grid-template-columns:1fr;}}
+  input[type=text],input[type=url],input[type=date],input[type=tel],textarea,select{
+    width:100%; font:inherit; font-size:16px; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input:hover,textarea:hover,select:hover{border-color:var(--ink-soft);}
+  textarea{resize:vertical; min-height:76px;}
+  input:focus,textarea:focus,select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow);}
+  button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .seg{display:flex; gap:8px; flex-wrap:wrap;}
+  .seg button{border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); padding:9px 15px; border-radius:var(--radius-md); font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; transition:all .15s ease;}
+  .seg button:hover{border-color:var(--accent);}
+  .seg button[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent); color:#8a5600; box-shadow:none;}
+  .btn{
+    border:1px solid transparent; background:var(--accent); color:#fff;
+    font-family:"Kanit",sans-serif; text-transform:none; letter-spacing:0; font-weight:600; font-size:13.5px;
+    padding:10px 20px; border-radius:var(--radius-md); cursor:pointer;
+    box-shadow:0 6px 16px rgba(244,152,0,.24);
+    transition:background .12s ease, box-shadow .18s ease, opacity .12s ease, transform .12s ease;
+  }
+  .btn:hover{background:#DC8700; box-shadow:0 10px 26px rgba(244,152,0,.34); transform:translateY(-1px);}
+  .btn:active{background:#C67900; transform:translateY(0);}
+  .btn:disabled{opacity:.5; cursor:default; transform:none; box-shadow:none;}
+  .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line);}
+  .btn.ghost:hover{background:var(--surface-2); border-color:var(--ink-soft);}
+  .btn.small{padding:7px 13px; font-size:12px;}
+  .btn.block{width:100%;}
+  .status-msg{font-size:13px; margin-top:10px; font-weight:500;}
+  .status-msg.ok{color:var(--good);}
+  .status-msg.err{color:var(--danger);}
+
+  .photo-drop{border:1.5px dashed var(--line); border-radius:var(--radius-md); padding:16px; text-align:center; background:var(--surface-2); transition:border-color .15s ease, background .15s ease;}
+  .photo-drop.drag{border-color:var(--accent); background:var(--accent-soft);}
+  .photo-drop-empty{display:flex; flex-direction:column; align-items:center; gap:8px;}
+  .photo-drop-empty span{font-size:13px; color:var(--ink-soft);}
+  .photo-preview-grid{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content:center;}
+  .photo-thumb{position:relative; width:76px; height:76px;}
+  .photo-thumb img{width:100%; height:100%; object-fit:cover; border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); display:block;}
+  .photo-thumb button{position:absolute; top:-7px; right:-7px; width:20px; height:20px; border-radius:50%; background:var(--danger); color:#fff; border:none; font-size:12px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}
+  .report-photo{margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;}
+  .report-photo img{max-width:120px; max-height:120px; border-radius:var(--radius-sm); display:block; box-shadow:var(--shadow-sm); cursor:pointer; object-fit:cover;}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:10px;}
+  @media (max-width:680px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .stat-tile{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:14px 10px; text-align:center; transition:box-shadow .15s ease, border-color .15s ease;}
+  .stat-tile:hover{box-shadow:var(--shadow-sm); border-color:var(--ink-soft);}
+  .stat-tile .icon{width:32px; height:32px; border-radius:var(--radius-pill); display:flex; align-items:center; justify-content:center; font-size:14px; margin:0 auto 9px; background:var(--surface-2); box-shadow:none;}
+  .stat-tile .num{font-family:"IBM Plex Mono",monospace; font-size:21px; font-weight:700; color:var(--ink); line-height:1;}
+  .stat-tile .lbl{font-size:11px; color:var(--ink-soft); margin-top:5px; font-weight:500;}
+  .stat-tile.tone-good .icon{background:var(--good-soft); color:var(--good);}
+  .stat-tile.tone-warn .icon{background:var(--warn-soft); color:var(--warn);}
+  .stat-tile.tone-info .icon{background:var(--info-soft); color:var(--info);}
+  .stat-tile.tone-muted .icon{background:var(--muted-soft); color:var(--muted);}
+  .stat-tile.tone-insight .icon{background:var(--insight-soft); color:var(--insight);}
+  .stat-tile.tone-fixed .icon{background:var(--fixed-soft); color:var(--fixed);}
+
+  .progress-track{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-pill); height:10px; overflow:hidden; position:relative;}
+  .progress-fill{background:var(--accent); height:100%; border-radius:var(--radius-pill); transition:width .4s ease;}
+
+  .btn-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+  @media (max-width:520px){.btn-grid{grid-template-columns:1fr;}}
+  .big-btn{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:15px; cursor:pointer; font:inherit; text-align:left; color:var(--ink); transition:box-shadow .15s ease, border-color .15s ease;}
+  .big-btn:hover{box-shadow:var(--shadow-sm); border-color:var(--accent); transform:none;}
+  .big-btn.primary{background:var(--accent); border-color:transparent; color:#fff; grid-column:1/-1; box-shadow:none;}
+  .big-btn.primary:hover{border-color:transparent; background:#DC8700;}
+  .big-btn .ic{font-size:22px; flex:none; width:42px; height:42px; display:flex; align-items:center; justify-content:center; background:var(--surface-2); border-radius:var(--radius-pill);}
+  .big-btn.primary .ic{background:rgba(255,255,255,.2);}
+  .big-btn .tt{font-weight:700; font-size:14px;}
+  .big-btn .ds{font-size:12px; opacity:.75;}
+
+  .announce{background:var(--accent-soft); color:#8a5600; border-radius:var(--radius-sm); padding:11px 15px; font-size:13px; font-weight:600; margin-bottom:16px; border:1px solid var(--accent-soft); display:flex; align-items:center; gap:8px;}
+  :root[data-theme="dark"] .announce, :root:not([data-theme="light"]) .announce{color:#ffd699;}
+
+  .mission-card{border:1px solid var(--line); border-radius:var(--radius-md); padding:14px; margin-bottom:8px; display:flex; gap:13px; align-items:flex-start; background:var(--surface); transition:box-shadow .15s ease, border-color .15s ease;}
+  .mission-card:hover{box-shadow:var(--shadow-sm); border-color:var(--accent);}
+  .mission-num{font-family:"IBM Plex Mono",monospace; font-weight:700; color:var(--accent); font-size:13px; background:var(--accent-soft); border-radius:var(--radius-pill); width:34px; height:34px; display:flex; align-items:center; justify-content:center; flex:none;}
+  .mission-tt{font-weight:700; font-size:14px;}
+  .mission-ds{font-size:12.5px; color:var(--ink-soft); margin-top:3px;}
+
+  .pill{display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:3px 9px; border-radius:var(--radius-sm); font-family:"Kanit",sans-serif; white-space:nowrap;}
+  .pill.pending{background:var(--warn-soft); color:var(--warn);}
+  .pill.reviewing{background:var(--info-soft); color:var(--info);}
+  .pill.verified{background:var(--good-soft); color:var(--good);}
+  .pill.duplicate,.pill.not_bug{background:var(--muted-soft); color:var(--muted);}
+  .pill.suggestion{background:var(--insight-soft); color:var(--insight);}
+  .pill.fixed{background:var(--fixed-soft); color:var(--fixed);}
+  .pill.bug{background:var(--accent-soft); color:#8a5600;}
+  .pill.insight{background:var(--insight-soft); color:var(--insight);}
+
+  .filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+  .filters select{width:auto; padding:7px 11px; font-size:13px; border-radius:var(--radius-sm); background:var(--surface); border-color:var(--line);}
+  .report{border:1px solid var(--line); border-left:3px solid var(--line); border-radius:var(--radius-md); padding:13px 15px; margin-bottom:8px; background:var(--surface); box-shadow:none; transition:box-shadow .15s ease, border-color .15s ease;}
+  .report:hover{box-shadow:var(--shadow-sm); border-color:var(--ink-soft);}
+  .report.acc-warn{border-left-color:var(--warn);}
+  .report.acc-info{border-left-color:var(--info);}
+  .report.acc-good{border-left-color:var(--good);}
+  .report.acc-muted{border-left-color:var(--muted);}
+  .report.acc-insight{border-left-color:var(--insight);}
+  .report.acc-fixed{border-left-color:var(--fixed);}
+  .report-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .report-title{font-weight:700; font-size:14px;}
+  .report-id{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-soft); letter-spacing:.02em;}
+  .report-meta{color:var(--ink-soft); font-size:12px; margin-top:3px;}
+  .report-desc{font-size:13px; margin-top:9px; white-space:pre-wrap; line-height:1.55;}
+  .report-tags{display:flex; gap:6px; flex-wrap:wrap;}
+  .admin-controls{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-md); padding:14px; margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .admin-controls .af-field{display:flex; flex-direction:column; gap:5px; min-width:0;}
+  .admin-controls .af-field span{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+  .admin-controls select,.admin-controls input{width:100%; min-width:0; padding:9px 11px; font-size:13.5px; background:var(--surface);}
+  .admin-controls .af-actions{grid-column:1 / -1; display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-top:2px; flex-wrap:wrap;}
+  @media (max-width:520px){.admin-controls{grid-template-columns:1fr;} .admin-controls .af-actions{justify-content:stretch;} .admin-controls .af-actions .btn{flex:1;}}
+  .save-hint{font-size:12.5px; color:var(--good); font-weight:700; min-height:15px;}
+
+  .lock-box{text-align:center; padding:12px 16px 4px;}
+  .lock-box input{max-width:240px; margin:0 auto 12px; text-align:center;}
+
+  /* Auth-card composition (login / passcode screens) — centered floating card, AuthKit-style */
+  .auth-shell{display:flex; justify-content:center; padding:36px 12px; position:relative;}
+  .auth-shell .card{width:100%; max-width:440px; position:relative; text-align:center; padding:32px 28px;}
+  .auth-shell.auth-wide .card{max-width:640px; text-align:left;}
+  .auth-shell.auth-wide .card > .auth-icon, .auth-shell.auth-wide .card > .auth-eyebrow, .auth-shell.auth-wide .card > h2, .auth-shell.auth-wide .card > .subtext{text-align:center;}
+  .auth-icon{width:52px; height:52px; border-radius:var(--radius-pill); background:var(--accent-soft); color:var(--accent); font-size:22px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;}
+  .auth-eyebrow{display:inline-flex; align-items:center; gap:10px; font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); margin:0 auto 12px; width:100%; justify-content:center;}
+  .auth-eyebrow::before, .auth-eyebrow::after{content:""; height:1px; width:32px; background:linear-gradient(90deg, transparent, var(--line)); flex:none;}
+  .auth-eyebrow::after{background:linear-gradient(90deg, var(--line), transparent);}
+  .auth-shell .card h2{font-size:19px;}
+  .auth-shell .card .subtext{max-width:44ch; margin-left:auto; margin-right:auto;}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .auth-shell .card::before{
+      content:""; position:absolute; inset:-40px -40px auto -40px; height:220px; z-index:-1; pointer-events:none;
+      background:radial-gradient(closest-side, rgba(244,152,0,.16), transparent 70%);
+    }
+  }
+  :root[data-theme="dark"] .auth-shell .card::before{
+    content:""; position:absolute; inset:-40px -40px auto -40px; height:220px; z-index:-1; pointer-events:none;
+    background:radial-gradient(closest-side, rgba(244,152,0,.16), transparent 70%);
+  }
+
+  /* Mascot onboarding (Buggy) — tap-through intro shown before employee login */
+  .onboard-card{max-width:400px; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; text-align:center; display:flex; flex-direction:column;}
+  .auth-shell.auth-wide .onboard-card{text-align:center;}
+  .onboard-card.is-final{cursor:default;}
+  .onboard-card > .auth-eyebrow{order:0;}
+  .onboard-card > .onboard-stage{order:1;}
+  .onboard-card > .onboard-tap{order:2;}
+  .onboard-card > .onboard-caption{order:3;}
+  .onboard-card > .onboard-hint{order:4;}
+  .onboard-card > #onboard-start-btn{order:5;}
+  .onboard-card > .onboard-dots{order:6;}
+  .onboard-card[data-step="3"] > .onboard-caption{order:0; margin-top:2px;}
+  .onboard-stage{position:relative; display:flex; align-items:flex-end; justify-content:center; height:200px; margin:4px auto 10px;}
+  .onboard-mascot{height:100%; width:auto; display:none;}
+  .onboard-mascot-sleep{position:relative;}
+  .onboard-mascot-spotted{position:relative;}
+  .onboard-mascot-checklist{position:relative; transform-origin:50% 100%;}
+  .onboard-card[data-step="0"] .onboard-mascot-sleep{display:inline-block; animation:onboardBreathe 2.6s ease-in-out infinite;}
+  @keyframes onboardBreathe{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-3px);} }
+  .onboard-card[data-step="1"] .onboard-mascot-spotted{display:inline-block; animation:onboardShake .5s ease;}
+  .onboard-spotted-img{display:block; height:100%; width:auto;}
+  .onboard-checklist-img{display:block; height:100%; width:auto;}
+  .onboard-checklist-bug-left, .onboard-checklist-bug-right{position:absolute; pointer-events:none;}
+  .onboard-checklist-bug-left{left:-20%; top:98%; width:34%; transform:translate(-45%,-70%);}
+  .onboard-checklist-bug-right{left:108%; top:93%; width:20%; transform:translate(-50%,-50%) scaleX(-1);}
+  @keyframes onboardStepIn{ 0%{transform:translateX(-10px) rotate(-3deg);} 27%{transform:translateX(3px) rotate(1deg);} 55%{transform:translateX(-6px) rotate(-2deg);} 80%{transform:translateX(2px) rotate(1deg);} 100%{transform:translateX(0) rotate(0deg);} }
+  .onboard-spotted-bug{position:absolute; left:90%; top:90%; width:21%; transform:translate(-50%,-50%); pointer-events:none; animation:onboardShake .5s ease .12s;}
+  .onboard-card[data-step="2"] .onboard-mascot-checklist{display:inline-block; animation:onboardStepIn .8s ease-out;}
+  .onboard-card[data-step="3"] .onboard-mascot-report{display:block; animation:onboardPop .4s ease;}
+  .onboard-sleep-img{display:block; height:100%; width:auto;}
+  .onboard-sleep-mouth{position:absolute; pointer-events:none;}
+  .onboard-sleep-mouth{left:37.54%; top:46.27%; width:24.77%; transform-origin:50% 40%; animation:onboardMouthSnore 2.6s ease-in-out infinite;}
+  @keyframes onboardMouthSnore{ 0%,100%{transform:scale(1,1);} 35%{transform:scale(.96,.94);} 62%{transform:scale(1.015,1.015);} }
+  /* Zzz cluster: one source image, split into 3 bands (top/mid/bottom Z) via clip-path so each letter can float independently */
+  .onboard-sleep-zzz-wrap{position:absolute; left:77.78%; top:0.37%; width:21.92%; pointer-events:none;}
+  .onboard-sleep-zzz-wrap .onboard-sleep-zzz{position:absolute; inset:0; width:100%; height:auto; display:block;}
+  .onboard-zzz-a{ clip-path:inset(68% 0 0 0); animation:onboardZzzFloat 2.4s ease-in-out infinite; animation-delay:0s; }
+  .onboard-zzz-b{ clip-path:inset(37% 0 31% 0); animation:onboardZzzFloat 2.4s ease-in-out infinite; animation-delay:.6s; }
+  .onboard-zzz-c{ clip-path:inset(0 0 61% 0); animation:onboardZzzFloat 2.4s ease-in-out infinite; animation-delay:1.2s; }
+  @keyframes onboardZzzFloat{
+    0%{ transform:translateY(4px); opacity:0; }
+    18%{ opacity:.9; }
+    55%{ transform:translateY(-7px); opacity:.9; }
+    85%{ opacity:0; }
+    100%{ transform:translateY(-9px); opacity:0; }
+  }
+  @keyframes onboardShake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-5px) rotate(-3deg);} 40%{transform:translateX(5px) rotate(3deg);} 60%{transform:translateX(-4px) rotate(-2deg);} 80%{transform:translateX(4px) rotate(2deg);} }
+  @keyframes onboardPop{ 0%{transform:scale(.92);} 60%{transform:scale(1.04);} 100%{transform:scale(1);} }
+  .onboard-fx{position:absolute; top:-6px; right:calc(50% - 74px); font-size:26px; line-height:1; pointer-events:none;}
+  .onboard-card[data-step="1"] .onboard-fx{animation:onboardExclaimPulse .9s ease-in-out infinite;}
+  @keyframes onboardExclaimPulse{ 0%{transform:scale(1.6); opacity:.5;} 55%{transform:scale(1); opacity:1;} 100%{transform:scale(1); opacity:1;} }
+  @keyframes onboardTapPulse{ 0%,100%{transform:translateY(0); opacity:.55;} 50%{transform:translateY(-6px); opacity:1;} }
+  @keyframes onboardBounce{ 0%{transform:scale(.4); opacity:0;} 60%{transform:scale(1.15); opacity:1;} 100%{transform:scale(1); opacity:1;} }
+  .onboard-tap{display:none; justify-content:center; align-items:center; margin:2px 0 8px; position:relative;}
+  .onboard-card[data-step="0"] .onboard-tap{display:flex;}
+  .onboard-tap::after{
+    content:""; position:absolute; left:50%; top:50%; width:30px; height:30px; margin:-15px 0 0 -15px;
+    border-radius:50%; background:radial-gradient(circle, rgba(244,152,0,.5) 0%, rgba(244,152,0,.18) 50%, transparent 75%);
+    opacity:0; animation:onboardTapRing 1.8s ease-out infinite; pointer-events:none; z-index:0;
+  }
+  :root[data-theme="dark"] .onboard-tap::after{
+    background:radial-gradient(circle, rgba(255,168,36,.55) 0%, rgba(255,168,36,.2) 50%, transparent 75%);
+  }
+  .onboard-tap-icon{height:46px; width:auto; display:block; position:relative; z-index:1; animation:onboardTapPulse 1.3s ease-in-out infinite;}
+  @keyframes onboardTapRing{ 0%{transform:scale(.5); opacity:.8;} 70%{transform:scale(2.2); opacity:0;} 100%{transform:scale(2.2); opacity:0;} }
+  .onboard-tap-icon-dark{display:none;}
+  .onboard-sleep-bug{position:absolute; left:114%; top:87%; width:23%; transform:translate(-50%,-50%); pointer-events:none;}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .onboard-tap-icon-light{display:none;}
+    :root:not([data-theme="light"]) .onboard-tap-icon-dark{display:block;}
+  }
+  :root[data-theme="dark"] .onboard-tap-icon-light{display:none;}
+  :root[data-theme="dark"] .onboard-tap-icon-dark{display:block;}
+  /* Onboarding: "mission badge" eyebrow + poster-style sticky-note accents */
+  #onboard-card > .auth-eyebrow{
+    align-self:center; width:auto; display:inline-flex; align-items:center; gap:7px;
+    padding:7px 16px; margin:0 auto 14px; background:var(--accent-soft); color:#8a5600;
+    border-radius:var(--radius-pill); font-weight:700; font-family:"Kanit",sans-serif;
+    font-size:11.5px; letter-spacing:.03em; text-transform:none;
+  }
+  #onboard-card > .auth-eyebrow::before{ content:"🐞"; height:auto; width:auto; background:none; font-size:13px; line-height:1; }
+  #onboard-card > .auth-eyebrow::after{ display:none; }
+  :root[data-theme="dark"] #onboard-card > .auth-eyebrow{ color:#ffd699; }
+  .onboard-sticky{
+    position:absolute; width:80px; padding:8px 9px; font-size:10.5px; font-weight:700; line-height:1.35;
+    background:#FFF3D6; color:#7a6420; border-radius:5px; box-shadow:var(--shadow-sm);
+    text-align:center; white-space:pre-line; pointer-events:none; z-index:1;
+  }
+  .onboard-sticky-1{ top:10px; left:-4px; transform:rotate(-7deg); }
+  .onboard-sticky-2{ top:10px; right:-4px; transform:rotate(6deg); background:#FFE3B0; }
+  .onboard-sticky-3{ top:104px; right:-10px; transform:rotate(4deg); display:none; }
+  .onboard-sticky-4{ top:196px; left:-10px; transform:rotate(-5deg); background:#FFE3B0; display:none; }
+  .onboard-card[data-step="0"] .onboard-sticky-3, .onboard-card[data-step="0"] .onboard-sticky-4{ display:block; }
+  :root[data-theme="dark"] .onboard-sticky{ background:#3a3116; color:#e8d9a8; box-shadow:var(--shadow-sm); }
+  :root[data-theme="dark"] .onboard-sticky-2{ background:#3d310f; }
+  :root[data-theme="dark"] .onboard-sticky-4{ background:#3d310f; }
+  @media (max-width:360px){
+    .onboard-sticky{ width:68px; font-size:9.5px; padding:6px 7px; }
+    .onboard-sticky-3{ top:98px; }
+    .onboard-sticky-4{ top:182px; }
+  }
+  @media (max-width:340px){ .onboard-sticky-3, .onboard-sticky-4{ display:none; } }
+  /* Small orange "pop" accents flanking the mission badge, echoing the poster reference (step 0 only) */
+  .onboard-card[data-step="0"]::before, .onboard-card[data-step="0"]::after{
+    content:"✦"; position:absolute; top:1px; color:var(--accent); font-size:13px; font-weight:700;
+    pointer-events:none; z-index:2; line-height:1;
+  }
+  .onboard-card[data-step="0"]::before{ left:calc(50% - 66px); transform:rotate(-14deg); }
+  .onboard-card[data-step="0"]::after{ right:calc(50% - 66px); transform:rotate(14deg); }
+  /* Soft, out-of-focus desk photo behind the wake-up scene (light mode only) -- blurred so it reads as warm ambience, never competes with our own badge/notes */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .onboard-tap::after{
+      background:radial-gradient(circle, rgba(255,168,36,.55) 0%, rgba(255,168,36,.2) 50%, transparent 75%);
+    }
+    :root:not([data-theme="light"]) #onboard-card > .auth-eyebrow{ color:#ffd699; }
+    :root:not([data-theme="light"]) .onboard-sticky{ background:#3a3116; color:#e8d9a8; box-shadow:var(--shadow-sm); }
+    :root:not([data-theme="light"]) .onboard-sticky-2{ background:#3d310f; }
+    :root:not([data-theme="light"]) .onboard-sticky-4{ background:#3d310f; }
+  }
+  .onboard-caption{font-size:16px; font-weight:700; color:var(--ink); min-height:24px; margin:2px 0 4px;}
+  .onboard-hint{font-size:12px; color:var(--ink-soft); font-weight:500; margin:0 0 6px;}
+  .onboard-dots{display:flex; gap:6px; justify-content:center; margin:12px 0 16px;}
+  .onboard-dots span{width:6px; height:6px; border-radius:50%; background:var(--line); transition:background .2s ease, width .2s ease;}
+  .onboard-dots span.is-active{background:var(--accent); width:16px; border-radius:var(--radius-pill);}
+  .onboard-card .btn.block{margin-top:2px;}
+
+  /* ================= Full-screen 9:16 poster onboarding + poster-style login =================
+     The 4 intro screens are the campaign posters themselves (9:16). Phones: the poster fills the whole
+     screen (cover). Tablets/PC: a full-height 9:16 column, with a blurred copy of the same poster filling
+     the rest of the window edge-to-edge. Toggled via document.body classes from boot()/showLoginOrApp(). */
+  :root{
+    --poster-0:url(images/img-49c6e6ac.webp);
+    --poster-1:url(images/img-266f974d.webp);
+    --poster-2:url(images/img-f895b846.webp);
+    --poster-3:url(images/img-4c6b1a4d.webp);
+    --poster-l0:url(images/img-0f466c01.webp);
+    --poster-l1:url(images/img-477b71f4.webp);
+    --poster-l2:url(images/img-6a5f9a4f.webp);
+    --poster-l3:url(images/img-9b08d438.webp);
+  }
+  @media (min-aspect-ratio:1/1){ :root{ --poster-0:var(--poster-l0); --poster-1:var(--poster-l1); --poster-2:var(--poster-l2); --poster-3:var(--poster-l3); } }
+  body.onboard-intro-active{ padding:0; }
+  body.onboard-intro-active .wrap{ max-width:none; margin:0; }
+  body.onboard-intro-active .top-nav,
+  body.onboard-intro-active .hero,
+  body.onboard-intro-active .role-nav{ display:none; }
+  /* showSyncBanner() sets an inline style="display:block"; !important is required to win over it */
+  body.onboard-intro-active .notice-box{ display:none !important; }
+  body.onboard-intro-active{ background-color:#fbf7f0; background-image:none; }
+
+  .onboard-bd, .onboard-poster{ display:none; }
+  .onboard-bd .op, .onboard-poster .op{ position:absolute; opacity:0; transition:opacity .35s ease; }
+  .onboard-bd .op.on, .onboard-poster .op.on{ opacity:1; }
+  /* per-poster geometry + movable element layers (character / bug / Zzz / "!" / tap hand are separate cut-outs; the poster base has them removed) */
+  .op[data-i="0"]{ --img:var(--poster-0); --tx:50.400%; --ty:89.711%; --tw:13.11; }
+  .op[data-i="0"] .e-bug1{ display:block; background-image:url(images/img-607087ee.webp); left:75.911%; top:70.550%; width:18.222%; height:11.200%; }
+  .op[data-i="0"] .e-hand{ display:block; background-image:url(images/img-415c5422.webp); left:45.156%; top:85.100%; width:10.489%; height:7.950%; }
+  .op[data-i="0"] .e-zzz1{ display:block; background-image:url(images/img-83df1c75.webp); left:82.133%; top:34.700%; width:7.556%; height:4.700%; }
+  .op[data-i="0"] .e-zzz2{ display:block; background-image:url(images/img-47f5ac2f.webp); left:76.089%; top:39.800%; width:5.956%; height:3.650%; }
+  .op[data-i="0"] .e-zzz3{ display:block; background-image:url(images/img-8a248b17.webp); left:71.911%; top:44.350%; width:5.067%; height:3.200%; }
+  .op[data-i="0"] .e-char{ display:block; background-image:url(images/img-74a0a532.webp); left:10.222%; top:38.050%; width:66.311%; height:44.850%; }
+  .op[data-i="1"]{ --img:var(--poster-1); --tx:50.222%; --ty:86.561%; --tw:13.11; }
+  .op[data-i="1"] .e-bug1{ display:block; background-image:url(images/img-d98159a3.webp); left:67.911%; top:66.750%; width:22.756%; height:13.600%; }
+  .op[data-i="1"] .e-hand{ display:block; background-image:url(images/img-8e769da2.webp); left:44.978%; top:81.950%; width:10.489%; height:7.950%; }
+  .op[data-i="1"] .e-excl{ display:block; background-image:url(images/img-a50381f2.webp); left:73.778%; top:30.750%; width:19.111%; height:10.000%; }
+  .op[data-i="1"] .e-char{ display:block; background-image:url(images/img-db80bbe2.webp); left:4.978%; top:31.300%; width:80.711%; height:47.400%; }
+  .op[data-i="2"]{ --img:var(--poster-2); --tx:50.267%; --ty:89.950%; --tw:12.56; }
+  .op[data-i="2"] .e-bug1{ display:block; background-image:url(images/img-3bb7cfe7.webp); left:6.489%; top:74.400%; width:18.933%; height:13.350%; }
+  .op[data-i="2"] .e-bug2{ display:block; background-image:url(images/img-a6b4ffdd.webp); left:73.067%; top:69.900%; width:19.733%; height:11.650%; }
+  .op[data-i="2"] .e-hand{ display:block; background-image:url(images/img-d1e2bbda.webp); left:45.244%; top:85.600%; width:10.044%; height:7.500%; }
+  .op[data-i="2"] .e-char{ display:block; background-image:url(images/img-aec3050a.webp); left:5.867%; top:33.700%; width:75.822%; height:49.100%; }
+  .op[data-i="3"]{ --img:var(--poster-3); --bx:23.289%; --by:91.650%; --bw:53.422%; --bh:6.500%; }
+  .op[data-i="3"] .e-bug1{ display:block; background-image:url(images/img-59c07686.webp); left:8.800%; top:69.350%; width:16.622%; height:11.250%; }
+  .op[data-i="3"] .e-char{ display:block; background-image:url(images/img-004a9a1a.webp); left:16.800%; top:37.200%; width:79.022%; height:43.150%; }
+  @media (min-aspect-ratio:1/1){
+    .op[data-i="0"]{ --tx:49.400%; --ty:88.281%; --tw:5.13; }
+    .op[data-i="0"] .e-bug1{ display:block; background-image:url(images/img-ad03bf08.webp); left:80.300%; top:65.156%; width:9.150%; height:18.489%; }
+    .op[data-i="0"] .e-hand{ display:block; background-image:url(images/img-30c015f3.webp); left:47.350%; top:83.022%; width:4.100%; height:9.067%; }
+    .op[data-i="0"] .e-zzz1{ display:block; background-image:url(images/img-c765e13c.webp); left:82.750%; top:19.644%; width:3.750%; height:7.200%; }
+    .op[data-i="0"] .e-zzz2{ display:block; background-image:url(images/img-50a9a129.webp); left:80.600%; top:27.378%; width:2.900%; height:5.511%; }
+    .op[data-i="0"] .e-zzz3{ display:block; background-image:url(images/img-df84bb4c.webp); left:78.950%; top:33.689%; width:2.700%; height:5.156%; }
+    .op[data-i="0"] .e-char{ display:block; background-image:url(images/img-77b8ffbe.webp); left:48.000%; top:14.756%; width:32.700%; height:69.422%; }
+    .op[data-i="1"]{ --tx:29.300%; --ty:76.932%; --tw:7.50; }
+    .op[data-i="1"] .e-bug1{ display:block; background-image:url(images/img-f17d89fb.webp); left:82.250%; top:69.067%; width:12.550%; height:24.000%; }
+    .op[data-i="1"] .e-hand{ display:block; background-image:url(images/img-4a5180c8.webp); left:26.300%; top:68.889%; width:6.000%; height:13.867%; }
+    .op[data-i="1"] .e-excl{ display:block; background-image:url(images/img-2628e309.webp); left:85.900%; top:14.133%; width:11.550%; height:18.044%; }
+    .op[data-i="1"] .e-char{ display:block; background-image:url(images/img-b1d1f56b.webp); left:49.600%; top:13.422%; width:40.900%; height:76.000%; }
+    .op[data-i="2"]{ --tx:29.175%; --ty:78.094%; --tw:6.06; }
+    .op[data-i="2"] .e-bug1{ display:block; background-image:url(images/img-658e8e06.webp); left:47.250%; top:68.800%; width:10.450%; height:22.489%; }
+    .op[data-i="2"] .e-bug2{ display:block; background-image:url(images/img-1b7619ba.webp); left:85.900%; top:62.311%; width:10.450%; height:20.178%; }
+    .op[data-i="2"] .e-hand{ display:block; background-image:url(images/img-83dcecd9.webp); left:26.750%; top:71.289%; width:4.850%; height:11.733%; }
+    .op[data-i="2"] .e-char{ display:block; background-image:url(images/img-27a2dabb.webp); left:51.550%; top:12.711%; width:36.150%; height:76.622%; }
+    .op[data-i="3"]{ --bx:16.750%; --by:80.622%; --bw:26.000%; --bh:10.044%; }
+    .op[data-i="3"] .e-bug1{ display:block; background-image:url(images/img-a5f6c860.webp); left:45.350%; top:67.644%; width:8.400%; height:14.578%; }
+    .op[data-i="3"] .e-char{ display:block; background-image:url(images/img-2fcb96e5.webp); left:53.800%; top:15.644%; width:39.400%; height:70.844%; }
+    .op[data-i="0"]{ --img:var(--poster-l0); } .op[data-i="1"]{ --img:var(--poster-l1); } .op[data-i="2"]{ --img:var(--poster-l2); } .op[data-i="3"]{ --img:var(--poster-l3); }
+  }
+
+  body.onboard-intro-active #emp-onboarding.auth-shell{ display:flex; align-items:center; justify-content:center; padding:0; min-height:100vh; min-height:100dvh; background:none; }
+  body.onboard-intro-active:not(.onboard-at-login){ overflow:hidden; }
+  body.onboard-intro-active .onboard-bd{ display:block; position:fixed; inset:0; z-index:0; overflow:hidden; background:#fbf7f0; pointer-events:none; }
+  .onboard-bd .op{ inset:-8%; background-image:var(--img); background-repeat:no-repeat; background-size:cover; background-position:center; filter:blur(30px) saturate(1.05); }
+  /* stage: phones/tablets (portrait) = 9:16 column; PC / landscape = 16:9 frame; the blurred backdrop fills any leftover window area */
+  body.onboard-intro-active #onboard-card{
+    position:relative; z-index:1; display:block; overflow:hidden; margin:0 auto; padding:0;
+    width:min(100vw, 56.25vh); width:min(100vw, 56.25dvh);
+    height:100vh; height:100dvh; max-width:none !important;
+    background:transparent; border:0; border-radius:0; box-shadow:none; transform:none; touch-action:manipulation;
+  }
+  @media (min-aspect-ratio:1/1){
+    body.onboard-intro-active #onboard-card{
+      width:min(100vw, 177.78vh); width:min(100vw, 177.78dvh);
+      height:min(100vh, 56.25vw); height:min(100dvh, 56.25vw);
+    }
+  }
+  body.onboard-intro-active #onboard-card::before, body.onboard-intro-active #onboard-card::after{ content:none !important; }
+  body.onboard-intro-active #onboard-card > *:not(.onboard-poster){ display:none !important; }
+  body.onboard-intro-active #onboard-card > .onboard-poster{ display:block; position:absolute; inset:0; }
+  .onboard-poster .op{ inset:0; }
+  /* .pbox = the poster frame itself (9:16 cover on portrait, exact 16:9 on landscape) so overlays line up with the artwork */
+  .pbox{ position:absolute; top:0; height:100%; left:calc(50% - 28.125vh); left:calc(50% - 28.125dvh); width:56.25vh; width:56.25dvh; container-type:size; }
+  @media (min-aspect-ratio:1/1){ .pbox{ left:0; width:100%; } }
+  .pbox > i{ position:absolute; display:block; pointer-events:none; }
+  .pimg{ inset:0; background-image:var(--img); background-repeat:no-repeat; background-size:100% 100%; }
+  .pbox > i.pel{ display:none; background-repeat:no-repeat; background-size:100% 100%; will-change:transform; }
+  /* tap hint ring over the hand icon (steps 0-2) */
+  .ptap{ left:var(--tx); top:var(--ty); width:calc(var(--tw,10) * 1cqw); height:calc(var(--tw,10) * 1cqw);
+         margin:calc(var(--tw,10) * -.5cqw) 0 0 calc(var(--tw,10) * -.5cqw); border-radius:50%; border:calc(var(--tw,10) * .12cqw) solid rgba(245,124,0,.55);
+         opacity:0; animation:onboardTapRing 1.8s ease-out infinite; }
+  .op[data-i="3"] .ptap{ display:none; }
+  /* glow pulse around the "เริ่มกันเลย!" button (step 3) */
+  .pglow{ display:none !important; }
+  .op[data-i="3"] .pglow{ display:block !important; left:var(--bx); top:var(--by); width:var(--bw); height:var(--bh); border-radius:999px; animation:pglowPulse 1.6s ease-out infinite; }
+  @keyframes pglowPulse{ 0%{ box-shadow:0 0 0 0 rgba(245,124,0,.55); } 70%,100%{ box-shadow:0 0 0 calc(2.2 * 1cqw) rgba(245,124,0,0); } }
+  /* ---- element-only motion: the poster artwork never moves, only these cut-out layers ---- */
+  @keyframes pBreathe{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.014); } }
+  @keyframes pEnter{ 0%{ transform:scale(1.045); } 100%{ transform:scale(1); } }
+  @keyframes pPop{ 0%{ transform:scale(1.05); } 55%{ transform:scale(.985); } 100%{ transform:scale(1); } }
+  @keyframes pBugWiggle{ 0%,100%{ transform:rotate(0) translateY(0); } 22%{ transform:rotate(-4deg) translateY(-.5cqh); } 50%{ transform:rotate(0) translateY(0); } 72%{ transform:rotate(4deg) translateY(-.5cqh); } }
+  @keyframes pZzz{ 0%{ transform:translateY(.8cqh) scale(.92); opacity:0; } 22%{ opacity:1; } 62%{ transform:translateY(-1.6cqh) scale(1.04); opacity:1; } 90%,100%{ transform:translateY(-2.6cqh) scale(1.08); opacity:0; } }
+  @keyframes pExclIdle{ 0%,100%{ transform:scale(1) rotate(0); } 50%{ transform:scale(1.09) rotate(-3deg); } }
+  .op:not(.on) .pel, .op:not(.on) .ptap, .op:not(.on) .pglow{ animation:none !important; }
+  .op.on .e-char{ transform-origin:50% 100%; animation:pBreathe 2.8s ease-in-out infinite; }
+  .op.on[data-i="0"] .e-char{ animation:pEnter .5s ease-out, pBreathe 2.8s ease-in-out .5s infinite; }
+  .op.on[data-i="1"] .e-char{ animation:onboardShake .5s ease, pBreathe 2.8s ease-in-out .5s infinite; }
+  .op.on[data-i="2"] .e-char{ animation:onboardStepIn .8s ease-out, pBreathe 2.8s ease-in-out .8s infinite; }
+  .op.on[data-i="3"] .e-char{ animation:pPop .45s ease, pBreathe 2.8s ease-in-out .45s infinite; }
+  .op.on .e-bug1, .op.on .e-bug2{ transform-origin:50% 92%; animation:pBugWiggle 2.4s ease-in-out infinite; }
+  .op.on .e-bug2{ animation-delay:-1.1s; }
+  .op.on[data-i="1"] .e-bug1{ animation:onboardShake .5s ease .12s, pBugWiggle 2.4s ease-in-out .7s infinite; }
+  .op.on .e-zzz1, .op.on .e-zzz2, .op.on .e-zzz3{ animation:pZzz 2.4s ease-in-out infinite; transform-origin:50% 50%; }
+  .op.on .e-zzz3{ animation-delay:0s; } .op.on .e-zzz2{ animation-delay:.6s; } .op.on .e-zzz1{ animation-delay:1.2s; }
+  .op.on .e-excl{ transform-origin:50% 90%; animation:onboardExclaimPulse .9s ease-in-out, pExclIdle 1.4s ease-in-out .9s infinite; }
+  .op.on .e-hand{ transform-origin:50% 100%; animation:onboardTapPulse 1.3s ease-in-out infinite; }
+  @media (prefers-reduced-motion:reduce){ .pel, .ptap, .pglow{ animation:none !important; } }
+
+  /* ---- poster-style employee login ---- */
+  .login-poster{
+    --lp-ink:#111827; --lp-sub:#4b5563; --lp-label:#1f2937; --lp-card:rgba(255,255,255,.9); --lp-field:#ffffff;
+    --lp-line:#d9dee7; --lp-ico:#8b93a1; --lp-ph:#9aa3b2; --lp-chip:#fff4e2; --lp-chip-ink:#9a4a00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .login-poster{
+      --lp-ink:#f3f4f6; --lp-sub:#b6bcc8; --lp-label:#e5e7eb; --lp-card:rgba(35,36,38,.92); --lp-field:#1b1c1e;
+      --lp-line:#3c3e43; --lp-ico:#8b93a1; --lp-ph:#7c8493; --lp-chip:#3a2e10; --lp-chip-ink:#ffd699;
+    }
+  }
+  :root[data-theme="dark"] .login-poster{
+    --lp-ink:#f3f4f6; --lp-sub:#b6bcc8; --lp-label:#e5e7eb; --lp-card:rgba(35,36,38,.92); --lp-field:#1b1c1e;
+    --lp-line:#3c3e43; --lp-ico:#8b93a1; --lp-ph:#7c8493; --lp-chip:#3a2e10; --lp-chip-ink:#ffd699;
+  }
+  .login-poster .lp-wrap{ width:min(100%, 520px); margin:0 auto; padding:clamp(34px,9dvh,110px) 16px 28px; text-align:center; position:relative; }
+  .login-poster .lp-logo{ height:clamp(64px,10dvh,104px); width:auto; display:block; margin:0 auto 8px; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+  .login-poster .lp-eyebrow{ font-weight:800; font-size:clamp(14px,2.3vh,19px); color:var(--lp-ink); letter-spacing:.01em; }
+  .login-poster .lp-eyebrow .o{ color:#F57C00; }
+  .login-poster .lp-title{ font-family:"Kanit",sans-serif; font-weight:800; font-size:clamp(34px,6vh,54px); line-height:1.12; margin:4px 0 0; color:var(--lp-ink); letter-spacing:-.01em; }
+  .login-poster .lp-title em{ font-style:normal; background:linear-gradient(90deg,#F59E0B,#EA580C); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .login-poster .lp-sub{ color:var(--lp-sub); font-size:clamp(14px,2.1vh,18px); margin:8px 0 18px; }
+  .login-poster .lp-card{ text-align:left; padding:18px 16px 16px; margin:0; max-width:100%; border-radius:24px; background:var(--lp-card); border:1px solid rgba(255,255,255,.6); box-shadow:0 18px 40px rgba(234,120,20,.14); }
+  .login-poster .lp-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:360px){ .login-poster .lp-row{ grid-template-columns:1fr; } }
+  .login-poster .lf{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; min-width:0; }
+  .login-poster .lf > label{ font-size:14px; font-weight:700; color:var(--lp-label); }
+  .login-poster .lf-box{ position:relative; }
+  .login-poster .lf-box svg{ position:absolute; left:12px; top:50%; transform:translateY(-50%); width:20px; height:20px; color:var(--lp-ico); pointer-events:none; }
+  #emp-login.login-poster .lf-box input, #emp-login.login-poster .lf-box select{
+    width:100%; height:46px; padding:0 12px 0 42px; font-size:15px; font-family:"Kanit",sans-serif; color:var(--lp-ink);
+    background-color:var(--lp-field); border:1px solid var(--lp-line); border-radius:12px; box-shadow:none; outline:none; min-width:0;
+  }
+  #emp-login.login-poster .lf-box input::placeholder{ color:var(--lp-ph); }
+  #emp-login.login-poster .lf-box input:focus, #emp-login.login-poster .lf-box select:focus{ border-color:#F59E0B; box-shadow:0 0 0 3px rgba(245,158,11,.22); }
+  #emp-login.login-poster .lf-box select{ appearance:none; -webkit-appearance:none; padding-right:34px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b93a1' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center; background-size:18px; }
+  .login-poster .lg-remember{ display:flex; align-items:center; gap:8px; margin:2px 0 12px; font-size:13px; color:var(--lp-sub); cursor:pointer; }
+  .login-poster .lg-remember input{ width:18px; height:18px; accent-color:#F97316; margin:0; }
+  .login-poster .lp-btn{ width:100%; height:52px; border:0; border-radius:999px; cursor:pointer; color:#fff; font:800 18px "Kanit",sans-serif;
+    background:linear-gradient(90deg,#FBBF24,#F97316 55%,#EA580C); box-shadow:0 10px 22px rgba(234,88,12,.32);
+    display:flex; align-items:center; justify-content:center; gap:8px; }
+  .login-poster .lp-btn:active{ transform:translateY(1px); }
+  .login-poster .lg-history{ margin:0 0 12px; }
+  .login-poster .lg-history-label{ font-size:12px; font-weight:700; color:var(--lp-sub); margin-bottom:6px; }
+  .login-poster .lg-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .login-poster .lg-chip{ display:inline-flex; align-items:center; border-radius:999px; background:var(--lp-chip); color:var(--lp-chip-ink); font-size:13px; font-weight:600; overflow:hidden; }
+  .login-poster .lg-chip button{ border:0; background:transparent; color:inherit; font:inherit; cursor:pointer; padding:7px 4px 7px 12px; }
+  .login-poster .lg-chip .x{ padding:7px 10px 7px 4px; opacity:.6; }
+  .login-poster .lp-bubble{ display:block; width:max-content; max-width:70%; margin:16px 4px 0 auto; padding:10px 18px; border-radius:22px 22px 6px 22px;
+    background:var(--lp-card); color:var(--lp-ink); font-weight:800; font-size:14px; line-height:1.25; text-align:center; white-space:pre-line; transform:rotate(-5deg); box-shadow:0 8px 20px rgba(234,120,20,.14); }
+
+  body.onboard-intro-active #emp-login.auth-shell{
+    display:block; padding:calc(env(safe-area-inset-top,0px)) calc(env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px)) calc(env(safe-area-inset-left,0px));
+    min-height:100vh; min-height:100dvh; box-sizing:border-box;
+    background:
+      radial-gradient(62vmax 62vmax at -12% -10%, #fde6c8 0, #fdecd4 38%, transparent 39%),
+      radial-gradient(44vmax 44vmax at 112% 8%, rgba(253,222,186,.95) 0, rgba(253,232,208,.7) 42%, transparent 43%),
+      radial-gradient(80vmax 46vmax at 30% 114%, rgba(252,220,186,.85) 0, rgba(253,232,208,.6) 46%, transparent 47%),
+      linear-gradient(180deg,#fffaf3,#fff3e4);
+  }
+  :root[data-theme="dark"] body.onboard-intro-active #emp-login.auth-shell{
+    background: radial-gradient(50vmax 40vmax at 15% 8%, rgba(255,168,36,.10), transparent 70%), linear-gradient(180deg,#18191B,#101113);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) body.onboard-intro-active #emp-login.auth-shell{
+      background: radial-gradient(50vmax 40vmax at 15% 8%, rgba(255,168,36,.10), transparent 70%), linear-gradient(180deg,#18191B,#101113);
+    }
+  }
+  body.onboard-at-login{ background-color:#fbf7f0; }
+  :root[data-theme="dark"] body.onboard-at-login{ background-color:#101113; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) body.onboard-at-login{ background-color:#101113; } }
+
+  /* ---- staff (Marketing / IT) entry is hidden from regular employees ---- */
+  body:not(.staff-mode) .role-nav{ display:none !important; }
+  .staff-exit{ display:none; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); font-family:"Kanit",sans-serif; font-size:12px; font-weight:600;
+    padding:6px 12px; border-radius:var(--radius-md); cursor:pointer; }
+  body.staff-mode .staff-exit{ display:inline-flex; align-items:center; }
+  .remember-row{ display:flex; align-items:center; justify-content:center; gap:8px; margin:0 0 12px; font-size:13px; color:var(--ink-soft); cursor:pointer; }
+  .remember-row input{ width:17px; height:17px; accent-color:var(--accent); margin:0; }
+
+  .bar-row{display:flex; align-items:center; gap:10px; margin-bottom:9px;}
+  .bar-row .lbl{width:150px; font-size:12px; color:var(--ink-soft); flex:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .bar-track{flex:1; background:var(--surface-2); border-radius:var(--radius-pill); height:8px; overflow:hidden;}
+  .bar-fill{background:var(--accent); height:100%; border-radius:var(--radius-pill); transition:width .4s ease;}
+  .bar-val{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); width:28px; text-align:right; flex:none;}
+
+  .award-card{border:1px solid var(--line); border-radius:var(--radius-md); padding:14px; margin-bottom:10px; transition:box-shadow .15s ease;}
+  .award-card:hover{box-shadow:var(--shadow-sm);}
+  .award-card h3{font-size:14px; margin-bottom:5px; display:flex; align-items:center; gap:8px;}
+  .award-card .desc{font-size:12px; color:var(--ink-soft); margin-bottom:10px;}
+  .award-card .suggest{font-size:12px; color:var(--ink-soft); margin-bottom:9px; background:var(--surface-2); padding:8px 11px; border-radius:var(--radius-sm);}
+  .empty-note{color:var(--ink-soft); font-size:13px; padding:18px 10px; text-align:center;}
+  .notice-box{background:var(--warn-soft); color:var(--warn); border-radius:var(--radius-sm); padding:11px 15px; font-size:12.5px; margin-bottom:10px; font-weight:500;}
+  .checkbox-row{display:flex; align-items:center; gap:9px;}
+  .checkbox-row input{width:auto; accent-color:var(--accent); width:17px; height:17px;}
+
+  /* ================= Light theme: Premium glass skin, AUTOCLIK orange as the sole accent ================= */
+  body{
+    background-image:
+      radial-gradient(1000px 460px at 50% -10%, rgba(244,152,0,.09), transparent 60%),
+      radial-gradient(760px 420px at 100% 4%, rgba(244,152,0,.05), transparent 55%);
+    background-attachment:fixed, fixed;
+  }
+  .card, .form-step, .tabs, .role-nav, .util-group, .emp-profile-bar,
+  .report, .admin-controls, .stat-tile, .big-btn, .mission-card, .award-card,
+  .photo-drop, .hero{
+    backdrop-filter:blur(20px) saturate(140%); -webkit-backdrop-filter:blur(20px) saturate(140%);
+  }
+  .card, .form-step{
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7), var(--shadow-md);
+    border-color:var(--line);
+  }
+  .hero{ box-shadow:inset 0 1px 0 rgba(255,255,255,.6), var(--shadow-md); }
+  .auth-shell .card{ box-shadow:inset 0 1px 0 rgba(255,255,255,.75), var(--shadow-lg); }
+  input[type=text],input[type=url],input[type=date],input[type=tel],textarea,select{
+    background:rgba(255,255,255,.72); border-color:var(--line);
+  }
+  .btn.ghost{ background:rgba(255,255,255,.5); }
+  .btn.ghost:hover{ background:rgba(255,255,255,.8); }
+  .seg button{ background:rgba(255,255,255,.55); }
+  .util-group{ background:rgba(255,255,255,.6); }
+
+  /* ================= Dark theme: AuthKit-inspired glass skin, AUTOCLIK orange as the sole accent ================= */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#05060b; --surface:rgba(255,255,255,.045); --surface-2:rgba(255,255,255,.075);
+      --ink:#F2F4F8; --ink-soft:#9BA1AC; --line:rgba(255,255,255,.12); --accent-soft:rgba(244,152,0,.20);
+      --good-soft:rgba(63,190,133,.16); --warn-soft:rgba(224,168,60,.16); --muted-soft:rgba(255,255,255,.08);
+      --insight-soft:rgba(153,151,240,.16); --info-soft:rgba(111,178,240,.16); --fixed-soft:rgba(79,201,188,.16);
+      --danger-soft:rgba(255,107,91,.16);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#05060b; --surface:rgba(255,255,255,.045); --surface-2:rgba(255,255,255,.075);
+    --ink:#F2F4F8; --ink-soft:#9BA1AC; --line:rgba(255,255,255,.12); --accent-soft:rgba(244,152,0,.20);
+    --good-soft:rgba(63,190,133,.16); --warn-soft:rgba(224,168,60,.16); --muted-soft:rgba(255,255,255,.08);
+    --insight-soft:rgba(153,151,240,.16); --info-soft:rgba(111,178,240,.16); --fixed-soft:rgba(79,201,188,.16);
+    --danger-soft:rgba(255,107,91,.16);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) body{
+      background-image:
+        radial-gradient(1100px 520px at 50% -12%, rgba(244,152,0,.14), transparent 60%),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 84px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 84px);
+      background-attachment:fixed, fixed, fixed;
+    }
+    :root:not([data-theme="light"]) .card, :root:not([data-theme="light"]) .form-step, :root:not([data-theme="light"]) .tabs,
+    :root:not([data-theme="light"]) .role-nav, :root:not([data-theme="light"]) .util-group, :root:not([data-theme="light"]) .emp-profile-bar,
+    :root:not([data-theme="light"]) .report, :root:not([data-theme="light"]) .admin-controls, :root:not([data-theme="light"]) .stat-tile,
+    :root:not([data-theme="light"]) .big-btn, :root:not([data-theme="light"]) .mission-card, :root:not([data-theme="light"]) .award-card,
+    :root:not([data-theme="light"]) .photo-drop, :root:not([data-theme="light"]) .hero{
+      backdrop-filter:blur(20px) saturate(140%); -webkit-backdrop-filter:blur(20px) saturate(140%);
+    }
+    :root:not([data-theme="light"]) .card, :root:not([data-theme="light"]) .form-step{
+      box-shadow:inset 0 1px 1px rgba(255,255,255,.10), inset 0 24px 48px rgba(255,255,255,.02), 0 16px 32px rgba(0,0,0,.55);
+      border-color:var(--line);
+    }
+    :root:not([data-theme="light"]) .hero{ box-shadow:inset 0 1px 1px rgba(255,255,255,.10), 0 16px 32px rgba(0,0,0,.5); border-left-color:var(--accent); }
+    :root:not([data-theme="light"]) input[type=text],:root:not([data-theme="light"]) input[type=url],
+    :root:not([data-theme="light"]) input[type=date],:root:not([data-theme="light"]) input[type=tel],
+    :root:not([data-theme="light"]) textarea,:root:not([data-theme="light"]) select{
+      background:rgba(255,255,255,.05); border-color:var(--line);
+    }
+    :root:not([data-theme="light"]) .btn{ box-shadow:0 0 0 rgba(244,152,0,0); }
+    :root:not([data-theme="light"]) .btn:hover{ box-shadow:0 0 20px rgba(244,152,0,.35); }
+    :root:not([data-theme="light"]) .btn.ghost{ background:rgba(255,255,255,.05); border-color:var(--line); color:var(--ink); }
+    :root:not([data-theme="light"]) .btn.ghost:hover{ background:rgba(255,255,255,.09); }
+    :root:not([data-theme="light"]) .seg button{ background:rgba(255,255,255,.04); border-color:var(--line); }
+    :root:not([data-theme="light"]) .util-group{ background:rgba(255,255,255,.05); }
+  }
+  :root[data-theme="dark"] body{
+    background-image:
+      radial-gradient(1100px 520px at 50% -12%, rgba(244,152,0,.14), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 84px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 84px);
+    background-attachment:fixed, fixed, fixed;
+  }
+  :root[data-theme="dark"] .card, :root[data-theme="dark"] .form-step, :root[data-theme="dark"] .tabs,
+  :root[data-theme="dark"] .role-nav, :root[data-theme="dark"] .util-group, :root[data-theme="dark"] .emp-profile-bar,
+  :root[data-theme="dark"] .report, :root[data-theme="dark"] .admin-controls, :root[data-theme="dark"] .stat-tile,
+  :root[data-theme="dark"] .big-btn, :root[data-theme="dark"] .mission-card, :root[data-theme="dark"] .award-card,
+  :root[data-theme="dark"] .photo-drop, :root[data-theme="dark"] .hero{
+    backdrop-filter:blur(20px) saturate(140%); -webkit-backdrop-filter:blur(20px) saturate(140%);
+  }
+  :root[data-theme="dark"] .card, :root[data-theme="dark"] .form-step{
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.10), inset 0 24px 48px rgba(255,255,255,.02), 0 16px 32px rgba(0,0,0,.55);
+    border-color:var(--line);
+  }
+  :root[data-theme="dark"] .hero{ box-shadow:inset 0 1px 1px rgba(255,255,255,.10), 0 16px 32px rgba(0,0,0,.5); border-left-color:var(--accent); }
+  :root[data-theme="dark"] input[type=text],:root[data-theme="dark"] input[type=url],
+  :root[data-theme="dark"] input[type=date],:root[data-theme="dark"] input[type=tel],
+  :root[data-theme="dark"] textarea,:root[data-theme="dark"] select{
+    background:rgba(255,255,255,.05); border-color:var(--line);
+  }
+  :root[data-theme="dark"] .btn{ box-shadow:0 0 0 rgba(244,152,0,0); }
+  :root[data-theme="dark"] .btn:hover{ box-shadow:0 0 20px rgba(244,152,0,.35); }
+  :root[data-theme="dark"] .btn.ghost{ background:rgba(255,255,255,.05); border-color:var(--line); color:var(--ink); }
+  :root[data-theme="dark"] .btn.ghost:hover{ background:rgba(255,255,255,.09); }
+  :root[data-theme="dark"] .seg button{ background:rgba(255,255,255,.04); border-color:var(--line); }
+  :root[data-theme="dark"] .util-group{ background:rgba(255,255,255,.05); }
+
+  /* ================= Employee flow: mobile-first defaults (primary access is phone, not desktop) ================= */
+  #role-employee .card{ padding:16px; border-radius:var(--radius-md); }
+  #role-employee .btn{ padding:13px 20px; font-size:14px; min-height:46px; }
+  #role-employee .btn.small{ padding:10px 14px; min-height:38px; }
+  #role-employee .form-step{ padding:14px; }
+  #role-employee input[type=text],#role-employee input[type=url],#role-employee input[type=date],
+  #role-employee input[type=tel],#role-employee textarea,#role-employee select{ padding:12px 13px; }
+  #role-employee .seg button{ padding:11px 14px; min-height:42px; }
+  #role-employee .photo-thumb{ width:84px; height:84px; }
+  #role-employee .photo-thumb button{ width:26px; height:26px; top:-8px; right:-8px; font-size:14px; }
+  #role-employee .big-btn{ padding:16px; min-height:48px; }
+  #role-employee .stat-grid{ grid-template-columns:repeat(2,1fr); gap:8px; }
+  #role-employee .big-btn .tt{ font-size:15px; }
+  #role-employee .big-btn .ds{ font-size:12.5px; }
+
+  /* ================= UGLYCASH-inspired refresh: pill CTAs, hero stat card, bottom sheet, bolder onboarding (employee flow only) ================= */
+
+  /* -- Pill-shaped CTA buttons -- */
+  #role-employee .btn{ border-radius:var(--radius-pill); }
+  #role-employee .btn:hover{ box-shadow:0 10px 26px rgba(244,152,0,.34), 0 0 0 6px var(--accent-glow); }
+  #role-employee .btn:focus-visible{ box-shadow:0 0 0 4px var(--accent-glow); outline:none; }
+  #role-employee .big-btn.primary{ border-radius:var(--radius-pill); padding-left:20px; padding-right:20px; box-shadow:0 0 0 5px var(--accent-glow); }
+  #role-employee .big-btn.primary:hover{ box-shadow:0 0 0 7px var(--accent-glow), var(--shadow-sm); }
+  :root[data-theme="dark"] #role-employee .big-btn.primary, :root:not([data-theme="light"]) #role-employee .big-btn.primary{ box-shadow:0 0 0 5px rgba(255,168,36,.22); }
+
+  /* -- Home hero stat card (balance-card style) -- */
+  #role-employee .hero-stat-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  #role-employee .hero-stat-label{ display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.03em; margin:0; }
+  #role-employee .hero-stat-icon{ font-size:15px; }
+  #role-employee .hero-stat-badge{ font-size:11.5px; font-weight:700; color:var(--good); background:var(--good-soft); border-radius:var(--radius-pill); padding:5px 12px; white-space:nowrap; flex:none; }
+  #role-employee .hero-stat-badge.is-muted{ color:var(--ink-soft); background:var(--surface-2); }
+  #role-employee .hero-stat-num{ font-family:"IBM Plex Mono",monospace; font-size:40px; font-weight:700; line-height:1.15; color:var(--ink); margin:6px 0 2px; }
+  #role-employee .hero-stat-caption{ margin:0 0 4px; }
+  #role-employee .hero-stat-actions{ display:flex; gap:8px; margin:14px 0 16px; }
+  #role-employee .hero-stat-actions .btn{ flex:1; }
+
+  /* -- Bottom-sheet style confirmation (report success) -- */
+  #role-employee #report-success-card{
+    position:fixed; left:12px; right:12px; bottom:0; z-index:999;
+    max-width:496px; margin:0 auto; border-radius:20px 20px 0 0; border-bottom:none;
+    box-shadow:0 -18px 48px rgba(33,28,20,.22); padding-top:12px;
+    animation:sheetSlideUp .25s ease;
+  }
+  #role-employee #report-success-card::before{
+    content:""; display:block; width:38px; height:4px; border-radius:var(--radius-pill);
+    background:var(--line); margin:0 auto 14px;
+  }
+  #role-employee #report-success-card h2,
+  #role-employee #report-success-card .subtext,
+  #role-employee #report-success-card #success-code{ text-align:center; }
+  #role-employee #report-success-card > div:last-child{ justify-content:center; padding-bottom:6px; }
+  :root[data-theme="dark"] #role-employee #report-success-card, :root:not([data-theme="light"]) #role-employee #report-success-card{ box-shadow:0 -18px 48px rgba(0,0,0,.5); }
+  body.sheet-open{ overflow:hidden; }
+  body.sheet-open::after{
+    content:""; position:fixed; inset:0; background:rgba(20,16,10,.5); z-index:998; animation:sheetFadeIn .2s ease;
+  }
+  @keyframes sheetSlideUp{ from{ transform:translateY(28px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+  @keyframes sheetFadeIn{ from{ opacity:0; } to{ opacity:1; } }
+
+  /* -- Bolder, illustration-forward onboarding headline -- */
+  #role-employee .onboard-caption{ font-size:20px; font-weight:800; text-transform:uppercase; letter-spacing:.01em; line-height:1.3; }
+  #role-employee .onboard-hint{ font-size:12.5px; }
+</style>
+
+<div class="wrap">
+  <div class="top-nav">
+    <div class="brand"><img class="brand-logo" src="images/img-ab3d57e1.png" alt="AUTOCLIK"></div>
+    <div class="top-nav-right">
+      <button type="button" id="staff-exit-btn" class="staff-exit" data-i18n="staffExit"></button>
+      <div class="util-group" id="theme-group">
+        <button type="button" data-theme-choice="light" aria-pressed="false">☀️</button>
+        <button type="button" data-theme-choice="dark" aria-pressed="false">🌙</button>
+        <button type="button" data-theme-choice="system" aria-pressed="true">🖥</button>
+      </div>
+      <div class="util-group" id="lang-group">
+        <button type="button" data-lang-choice="th" aria-pressed="true">TH</button>
+        <button type="button" data-lang-choice="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero hero-centered">
+    <div class="eyebrow" data-i18n="heroEyebrow"></div>
+    <h1 id="hero-title" class="hero-title-gradient">App Bug Hunter</h1>
+    <p id="hero-tagline"></p>
+    <div class="hero-fan"><div class="hero-meta" id="hero-meta"></div></div>
+  </div>
+
+  <div class="role-nav" role="tablist" aria-label="role">
+    <button id="rolebtn-employee" role="tab" aria-selected="true" data-i18n="roleEmployee"></button>
+    <button id="rolebtn-marketing" role="tab" aria-selected="false" data-i18n="roleMarketing"></button>
+    <button id="rolebtn-it" role="tab" aria-selected="false" data-i18n="roleIt"></button>
+  </div>
+
+  <div class="notice-box" id="sync-status-banner" style="display:none;"></div>
+
+  <!-- ================= EMPLOYEE ================= -->
+  <div id="role-employee">
+
+    <section id="emp-onboarding" class="auth-shell auth-wide">
+      <div class="onboard-bd" aria-hidden="true"><div class="op on" data-i="0"></div><div class="op" data-i="1"></div><div class="op" data-i="2"></div><div class="op" data-i="3"></div></div>
+      <div class="card onboard-card" id="onboard-card" data-step="0" role="button" tabindex="0" aria-label="Buggy onboarding">
+        <div class="onboard-poster" aria-hidden="true"><div class="op on" data-i="0"><div class="pbox"><i class="pimg"></i><i class="pel e-zzz1"></i><i class="pel e-zzz2"></i><i class="pel e-zzz3"></i><i class="pel e-char"></i><i class="pel e-bug1"></i><i class="pel e-bug2"></i><i class="pel e-excl"></i><i class="pel e-hand"></i><i class="ptap"></i><i class="pglow"></i></div></div><div class="op" data-i="1"><div class="pbox"><i class="pimg"></i><i class="pel e-zzz1"></i><i class="pel e-zzz2"></i><i class="pel e-zzz3"></i><i class="pel e-char"></i><i class="pel e-bug1"></i><i class="pel e-bug2"></i><i class="pel e-excl"></i><i class="pel e-hand"></i><i class="ptap"></i><i class="pglow"></i></div></div><div class="op" data-i="2"><div class="pbox"><i class="pimg"></i><i class="pel e-zzz1"></i><i class="pel e-zzz2"></i><i class="pel e-zzz3"></i><i class="pel e-char"></i><i class="pel e-bug1"></i><i class="pel e-bug2"></i><i class="pel e-excl"></i><i class="pel e-hand"></i><i class="ptap"></i><i class="pglow"></i></div></div><div class="op" data-i="3"><div class="pbox"><i class="pimg"></i><i class="pel e-zzz1"></i><i class="pel e-zzz2"></i><i class="pel e-zzz3"></i><i class="pel e-char"></i><i class="pel e-bug1"></i><i class="pel e-bug2"></i><i class="pel e-excl"></i><i class="pel e-hand"></i><i class="ptap"></i><i class="pglow"></i></div></div></div>
+        <div class="onboard-sticky onboard-sticky-1" aria-hidden="true" data-i18n="onboardSticky1"></div>
+        <div class="onboard-sticky onboard-sticky-2" aria-hidden="true" data-i18n="onboardSticky2"></div>
+        <div class="onboard-sticky onboard-sticky-3" aria-hidden="true" data-i18n="onboardSticky3"></div>
+        <div class="onboard-sticky onboard-sticky-4" aria-hidden="true" data-i18n="onboardSticky4"></div>
+        <div class="auth-eyebrow" data-i18n="onboardBadge"></div>
+        <div class="onboard-stage">
+          <span class="onboard-mascot onboard-mascot-sleep" id="onboard-mascot-sleep"><img class="onboard-sleep-img" src="images/img-ef971e95.webp" alt="Buggy mascot, sleeping"><span class="onboard-sleep-zzz-wrap"><img class="onboard-sleep-zzz onboard-zzz-a" src="images/img-992f0b47.webp" alt="" aria-hidden="true"><img class="onboard-sleep-zzz onboard-zzz-b" src="images/img-992f0b47.webp" alt="" aria-hidden="true"><img class="onboard-sleep-zzz onboard-zzz-c" src="images/img-992f0b47.webp" alt="" aria-hidden="true"></span><img class="onboard-sleep-mouth" src="images/img-dcff8a87.webp" alt="" aria-hidden="true"><img class="onboard-sleep-bug" src="images/img-e259c5ea.webp" alt="" aria-hidden="true"></span>
+          <span class="onboard-mascot onboard-mascot-spotted" id="onboard-mascot-spotted"><img class="onboard-spotted-img" src="images/img-4e99b8f5.webp" alt="Buggy mascot, spotted a bug"><img class="onboard-spotted-bug" src="images/img-e259c5ea.webp" alt="" aria-hidden="true"></span>
+          <span class="onboard-mascot onboard-mascot-checklist" id="onboard-mascot-checklist"><img class="onboard-checklist-img" src="images/img-ba4f82cb.webp" alt="Buggy mascot, checklist"><img class="onboard-checklist-bug-left" src="images/img-67694328.webp" alt="" aria-hidden="true"><img class="onboard-checklist-bug-right" src="images/img-e259c5ea.webp" alt="" aria-hidden="true"></span>
+          <img class="onboard-mascot onboard-mascot-report" id="onboard-mascot-report" src="images/img-be3f540a.webp" alt="Buggy mascot, ready to report">
+          <div class="onboard-fx" id="onboard-fx" aria-hidden="true"></div>
+        </div>
+        <div class="onboard-tap" aria-hidden="true"><img class="onboard-tap-icon onboard-tap-icon-light" src="images/img-95614cb2.webp" alt=""><img class="onboard-tap-icon onboard-tap-icon-dark" src="images/img-f5dcfe21.webp" alt=""></div>
+        <p class="onboard-caption" id="onboard-caption"></p>
+        <p class="onboard-hint" id="onboard-hint"></p>
+        <button type="button" class="btn block" id="onboard-start-btn" hidden></button>
+        <div class="onboard-dots" id="onboard-dots" aria-hidden="true">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+    </section>
+
+    <section id="emp-login" class="auth-shell auth-wide login-poster" hidden>
+      <div class="lp-wrap">
+        <img class="lp-logo" id="lp-logo" alt="AUTOCLIK" draggable="false">
+        <div class="lp-eyebrow"><span class="o">AUTOCLIK</span> BUG HUNTER</div>
+        <p class="lp-sub" data-i18n="lpSub"></p>
+        <div class="card lp-card">
+          <div class="lg-history" id="lg-history" hidden>
+            <div class="lg-history-label" data-i18n="recentLabel"></div>
+            <div class="lg-chips" id="lg-chips"></div>
+          </div>
+          <form id="login-form" autocomplete="on">
+            <div class="lf"><label for="lg-name" data-i18n="lblName"></label><div class="lf-box"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg><input type="text" id="lg-name" data-i18n-placeholder="phName" name="name" autocomplete="name" list="dl-name" required></div></div>
+              <div class="lf"><label for="lg-company" data-i18n="lblCompany"></label><div class="lf-box"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 21V5l9-2v6h7v12zM7 8v2h2V8zm0 4v2h2v-2zm0 4v2h2v-2zm5 0v2h2v-2zm0-4v2h2v-2zm5 0v2h2v-2zm0 4v2h2v-2z"/></svg><select id="lg-company" name="company" autocomplete="organization" required></select></div></div>
+            <div class="lp-row">
+              <div class="lf"><label for="lg-empid" data-i18n="lblEmpId"></label><div class="lf-box"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm4.5 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM4.5 17h6c0-2-1.5-3-3-3s-3 1-3 3zM13 9v1.5h6V9zm0 3v1.5h6V12zm0 3v1.5h4V15z"/></svg><input type="text" id="lg-empid" data-i18n-placeholder="phEmpId" name="employeeId" autocomplete="off" autocapitalize="characters" spellcheck="false" list="dl-empid" required></div></div>
+            <div class="lf"><label for="lg-position" data-i18n="lblPosition"></label><div class="lf-box"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 4h6a1 1 0 0 1 1 1v2h4a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4V5a1 1 0 0 1 1-1zm1 2v1h4V6zm-7 6v1.5h18V12z"/></svg><input type="text" id="lg-position" data-i18n-placeholder="phPosition" name="position" autocomplete="organization-title" list="dl-position"></div></div>
+            </div>
+            <div class="lp-row">
+              <div class="lf"><label for="lg-branch" data-i18n="lblBranch"></label><div class="lf-box"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg><select id="lg-branch" name="branch" required></select></div></div>
+              <div class="lf"><label for="lg-dept" data-i18n="lblDept"></label><div class="lf-box"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M2 20c0-3.6 3-6 7-6s7 2.4 7 6zM16 14.5c3.2 0 6 1.7 6 5.5h-4.5c0-2.2-.6-4-1.5-5.5z"/></svg><select id="lg-dept" name="department" required></select></div></div>
+            </div>
+            <div class="lf"><label for="lg-phone" data-i18n="lblPhone"></label><div class="lf-box"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11 11 0 0 0 3.5.56 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.2.2 2.4.56 3.5a1 1 0 0 1-.25 1z"/></svg><input type="text" id="lg-phone" data-i18n-placeholder="phPhone" name="phone" autocomplete="tel" inputmode="tel" list="dl-phone"></div></div>
+            <label class="lg-remember"><input type="checkbox" id="lg-remember" checked><span data-i18n="rememberMe"></span></label>
+            <button type="submit" class="lp-btn"><span data-i18n="btnStartActivity"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          </form>
+          <datalist id="dl-name"></datalist><datalist id="dl-empid"></datalist><datalist id="dl-position"></datalist><datalist id="dl-phone"></datalist>
+        </div>
+        <div class="lp-bubble" data-i18n="lpBubble"></div>
+      </div>
+    </section>
+
+    <div id="emp-app" hidden>
+      <div class="emp-profile-bar">
+        <span id="emp-profile-text"></span>
+        <button type="button" class="btn ghost small" id="logout-btn" data-i18n="btnLogout"></button>
+      </div>
+      <div class="tabs" role="tablist" aria-label="employee-tabs">
+        <button class="tab" id="tabbtn-home" role="tab" aria-selected="true" data-i18n="tabHome"></button>
+        <button class="tab" id="tabbtn-mission" role="tab" aria-selected="false" data-i18n="tabMission"></button>
+        <button class="tab" id="tabbtn-report" role="tab" aria-selected="false" data-i18n="tabReport"></button>
+        <button class="tab" id="tabbtn-mybugs" role="tab" aria-selected="false" data-i18n="tabMyBugs"></button>
+        <button class="tab" id="tabbtn-rules" role="tab" aria-selected="false" data-i18n="tabRules"></button>
+      </div>
+
+      <section id="panel-home">
+        <div id="home-announce"></div>
+        <div class="card">
+          <div class="btn-grid">
+            <button class="big-btn primary" data-goto="report"><span class="ic">🐞</span><span><span class="tt" data-i18n="btnReportBug"></span><br><span class="ds" data-i18n="dsReportBug"></span></span></button>
+            <button class="big-btn" data-goto="mybugs"><span class="ic">📋</span><span><span class="tt" data-i18n="btnMyBugs"></span><br><span class="ds" data-i18n="dsMyBugs"></span></span></button>
+            <button class="big-btn" data-goto="mission"><span class="ic">🎯</span><span><span class="tt" data-i18n="btnMission"></span><br><span class="ds" data-i18n="dsMission"></span></span></button>
+            <button class="big-btn" data-goto="rules"><span class="ic">🎁</span><span><span class="tt" data-i18n="btnRules"></span><br><span class="ds" data-i18n="dsRules"></span></span></button>
+          </div>
+        </div>
+        <div class="card hero-stat-card">
+          <div class="hero-stat-top">
+            <h2 class="hero-stat-label"><span class="hero-stat-icon" aria-hidden="true">🐞</span><span data-i18n="statTotal"></span></h2>
+            <span class="hero-stat-badge" id="home-hero-badge"></span>
+          </div>
+          <div class="hero-stat-num" id="home-hero-total">0</div>
+          <p class="subtext hero-stat-caption" id="home-who"></p>
+          <div class="hero-stat-actions">
+            <button type="button" class="btn small" data-goto="report" data-i18n="btnReportBug"></button>
+            <button type="button" class="btn ghost small" data-goto="mission" data-i18n="btnMission"></button>
+          </div>
+          <h3 style="font-size:12.5px; color:var(--ink-soft); font-weight:700; margin:2px 0 8px;" data-i18n="myActivityTitle"></h3>
+          <div class="stat-grid" id="home-stats"></div>
+        </div>
+        <div class="card">
+          <h2 data-i18n="progressTitle"></h2>
+          <p class="subtext" id="home-progress-text"></p>
+          <div class="progress-track"><div class="progress-fill" id="home-progress-fill" style="width:0%"></div></div>
+        </div>
+        <div class="card">
+          <h2 data-i18n="campaignActivityTitle"></h2>
+          <p class="subtext" data-i18n="campaignActivitySub"></p>
+          <div class="stat-grid" id="home-campaign-stats" style="grid-template-columns:repeat(3,1fr);"></div>
+        </div>
+        <div class="card"><p class="subtext" style="margin:0;" data-i18n="homeHint"></p></div>
+      </section>
+
+      <section id="panel-mission" hidden>
+        <div class="card">
+          <h2 data-i18n="missionTitle"></h2>
+          <p class="subtext" data-i18n="missionSub"></p>
+          <div id="mission-list"></div>
+        </div>
+      </section>
+
+      <section id="panel-report" hidden>
+        <div class="card" id="report-closed-card" hidden>
+          <div class="notice-box" data-i18n="reportClosedNotice"></div>
+        </div>
+        <div class="card" id="report-form-card">
+          <h2 data-i18n="reportTitle"></h2>
+          <p class="subtext" data-i18n="reportSub"></p>
+          <div class="report-progress-wrap">
+            <div class="report-progress-track"><div class="report-progress-fill" id="report-progress-fill" style="width:0%"></div></div>
+            <div class="report-progress-label" id="report-progress-label"></div>
+          </div>
+          <form id="report-form">
+            <div class="form-step">
+              <div class="form-step-head"><span class="form-step-num">1</span><span class="form-step-title" data-i18n="stepWhatTitle"></span></div>
+              <div class="field">
+                <label data-i18n="lblType"></label>
+                <div class="seg" id="type-seg">
+                  <button type="button" data-val="bug" aria-pressed="true" data-i18n="typeBug"></button>
+                  <button type="button" data-val="insight" aria-pressed="false" data-i18n="typeInsight"></button>
+                </div>
+              </div>
+              <div class="field">
+                <label data-i18n="lblModule"></label>
+                <select id="f-module" required></select>
+              </div>
+            </div>
+
+            <div class="form-step">
+              <div class="form-step-head"><span class="form-step-num">2</span><span class="form-step-title" data-i18n="stepDetailsTitle"></span></div>
+              <div class="field">
+                <label data-i18n="lblDesc"></label>
+                <textarea id="f-desc" required data-i18n-placeholder="phDesc"></textarea>
+              </div>
+              <div class="field">
+                <label data-i18n="lblSteps"></label>
+                <textarea id="f-steps" data-i18n-placeholder="phSteps"></textarea>
+              </div>
+            </div>
+
+            <div class="form-step">
+              <div class="form-step-head"><span class="form-step-num">3</span><span class="form-step-title" data-i18n="stepEvidenceTitle"></span></div>
+              <div class="row3">
+                <div class="field"><label data-i18n="lblOs"></label>
+                  <select id="f-os"><option value="" data-i18n="phSelect"></option><option value="iOS">iOS</option><option value="Android">Android</option></select>
+                </div>
+                <div class="field"><label data-i18n="lblDeviceModel"></label><input type="text" id="f-devicemodel" data-i18n-placeholder="phDeviceModel"></div>
+                <div class="field"><label data-i18n="lblAppVer"></label><input type="text" id="f-appver"></div>
+              </div>
+              <div class="field">
+                <label data-i18n="lblPhoto"></label>
+                <div class="photo-drop" id="photo-drop">
+                  <input type="file" id="f-photo-input" accept="image/*" multiple hidden>
+                  <div class="photo-drop-empty" id="photo-drop-empty">
+                    <span data-i18n="photoDropHint"></span>
+                    <button type="button" class="btn ghost small" id="photo-pick-btn" data-i18n="btnChoosePhoto"></button>
+                  </div>
+                  <div class="photo-preview-grid" id="photo-preview-grid"></div>
+                  <div class="status-msg" id="photo-upload-status"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label data-i18n="lblLink"></label>
+                <input type="url" id="f-link" data-i18n-placeholder="phLink">
+                <p class="subtext" style="margin:6px 0 0;" data-i18n="linkWarning"></p>
+              </div>
+            </div>
+
+            <div class="form-step">
+              <div class="form-step-head"><span class="form-step-num">4</span><span class="form-step-title" data-i18n="stepConfirmTitle"></span></div>
+              <div class="field">
+                <label data-i18n="lblRepeat"></label>
+                <div class="seg" id="repeat-seg">
+                  <button type="button" data-val="again" aria-pressed="true" data-i18n="repeatAgain"></button>
+                  <button type="button" data-val="not_again" aria-pressed="false" data-i18n="repeatNotAgain"></button>
+                  <button type="button" data-val="not_tried" aria-pressed="false" data-i18n="repeatNotTried"></button>
+                </div>
+              </div>
+              <button type="submit" class="btn block" id="submit-btn" data-i18n="btnSubmitReport"></button>
+              <div id="submit-status" class="status-msg" role="status"></div>
+            </div>
+          </form>
+        </div>
+
+        <div class="card" id="report-success-card" hidden>
+          <h2 data-i18n="successTitle"></h2>
+          <p class="subtext" style="margin-bottom:4px;" data-i18n="successLabel"></p>
+          <p class="mono" style="font-size:22px; font-weight:700; color:var(--accent); margin:0 0 12px;" id="success-code"></p>
+          <p class="subtext" data-i18n="successBody"></p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+            <button class="btn" id="success-again-btn" data-i18n="btnAgain"></button>
+            <button class="btn ghost" id="success-mybugs-btn" data-i18n="btnGoMyBugs"></button>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-mybugs" hidden>
+        <div class="card">
+          <h2 data-i18n="mybugsTitle"></h2>
+          <p class="subtext" id="mybugs-who"></p>
+          <div id="mybugs-list"></div>
+        </div>
+      </section>
+
+      <section id="panel-rules" hidden>
+        <div class="card">
+          <h2 data-i18n="rulesTitle"></h2>
+          <p class="subtext" id="rules-period"></p>
+          <div class="award-card"><h3 data-i18n="award1tt"></h3><p class="desc" data-i18n="award1ds"></p></div>
+          <div class="award-card"><h3 data-i18n="award2tt"></h3><p class="desc" data-i18n="award2ds"></p></div>
+          <div class="award-card"><h3 data-i18n="award3tt"></h3><p class="desc" data-i18n="award3ds"></p></div>
+          <div class="award-card"><h3 data-i18n="award4tt"></h3><p class="desc" data-i18n="award4ds"></p></div>
+          <div class="notice-box" data-i18n="noticeHidden"></div>
+          <div class="notice-box" data-i18n="noticeCount"></div>
+        </div>
+        <div class="card">
+          <h2 data-i18n="faqTitle"></h2>
+          <div id="faq-list"></div>
+        </div>
+        <div class="card">
+          <p class="subtext" style="margin:0;"><a href="#" id="edit-profile-link" data-i18n="editProfile"></a></p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ================= MARKETING ================= -->
+  <div id="role-marketing" hidden>
+    <section id="mkt-lock" class="auth-shell">
+      <div class="card"><div class="lock-box">
+        <div class="auth-icon">🔒</div>
+        <div class="auth-eyebrow" data-i18n="heroEyebrow"></div>
+        <h2 style="margin-bottom:6px;" data-i18n="mktLockTitle"></h2>
+        <p class="subtext" data-i18n="mktLockSub"></p>
+        <input type="password" id="mkt-pass" autocomplete="current-password" data-i18n-placeholder="phPassMkt">
+        <label class="remember-row"><input type="checkbox" id="mkt-remember"><span data-i18n="rememberDevice"></span></label>
+        <div><button class="btn block" id="mkt-unlock-btn" data-i18n="btnLogin"></button></div>
+        <div id="mkt-lock-msg" class="status-msg err"></div>
+      </div></div>
+    </section>
+
+    <div id="mkt-app" hidden>
+      <div class="tabs" role="tablist" aria-label="mkt-tabs">
+        <button class="tab" id="tabbtn-mkt-dash" role="tab" aria-selected="true">Dashboard</button>
+        <button class="tab" id="tabbtn-mkt-reports" role="tab" aria-selected="false">Reports</button>
+        <button class="tab" id="tabbtn-mkt-participants" role="tab" aria-selected="false">Participants</button>
+        <button class="tab" id="tabbtn-mkt-awards" role="tab" aria-selected="false">Award</button>
+        <button class="tab" id="tabbtn-mkt-settings" role="tab" aria-selected="false">Settings</button>
+      </div>
+
+      <section id="panel-mkt-dash">
+        <div class="card"><h2 data-i18n="dashTitle"></h2><div class="stat-grid" id="mkt-dash-stats"></div></div>
+        <div class="card"><h2 data-i18n="dashBranchTitle"></h2><div id="mkt-dash-branch"></div></div>
+        <div class="card"><h2 data-i18n="dashDeptTitle"></h2><div id="mkt-dash-dept"></div></div>
+        <div class="card">
+          <h2 data-i18n="exportTitle"></h2>
+          <p class="subtext" data-i18n="exportSub"></p>
+          <button class="btn" id="export-csv-btn" data-i18n="btnExport"></button>
+          <div id="export-status" class="status-msg"></div>
+        </div>
+      </section>
+
+      <section id="panel-mkt-reports" hidden>
+        <div class="card">
+          <h2 data-i18n="reportsTitle"></h2>
+          <div class="filters">
+            <select id="mf-status"><option value="" data-i18n="filterAllStatus"></option></select>
+            <select id="mf-branch"><option value="" data-i18n="filterAllBranch"></option></select>
+            <select id="mf-dept"><option value="" data-i18n="filterAllDept"></option></select>
+            <select id="mf-os"><option value="" data-i18n="filterAllOs"></option><option value="iOS">iOS</option><option value="Android">Android</option></select>
+            <select id="mf-type"><option value="" data-i18n="filterAllType"></option><option value="bug" data-i18n="typeBugShort"></option><option value="insight" data-i18n="typeInsightShort"></option></select>
+          </div>
+          <div id="mkt-reports-list"></div>
+        </div>
+      </section>
+
+      <section id="panel-mkt-participants" hidden>
+        <div class="card"><h2 data-i18n="participantsTitle"></h2><div id="mkt-participants-list"></div></div>
+      </section>
+
+      <section id="panel-mkt-awards" hidden>
+        <div class="card">
+          <h2 data-i18n="awardTitle"></h2>
+          <p class="subtext" data-i18n="awardSub"></p>
+          <div id="award-finalized-banner"></div>
+          <div id="award-body"></div>
+          <button class="btn" id="finalize-btn" data-i18n="btnFinalize"></button>
+          <button class="btn ghost" id="reopen-award-btn" hidden data-i18n="btnReopen"></button>
+          <div id="award-save-hint" class="status-msg"></div>
+        </div>
+      </section>
+
+      <section id="panel-mkt-settings" hidden>
+        <div class="card">
+          <h2 data-i18n="settingsTitle"></h2>
+          <form id="settings-form">
+            <div class="row2">
+              <div class="field"><label data-i18n="lblCampaignName"></label><input type="text" id="s-name"></div>
+              <div class="field"><label data-i18n="lblTagline"></label><input type="text" id="s-tagline"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label data-i18n="lblStartDate"></label><input type="date" id="s-start"></div>
+              <div class="field"><label data-i18n="lblEndDate"></label><input type="date" id="s-end"></div>
+            </div>
+            <div class="field"><label data-i18n="lblTestLink"></label><input type="url" id="s-testlink"></div>
+            <div class="field"><label data-i18n="lblAnnounce"></label><textarea id="s-announce" data-i18n-placeholder="phAnnounce"></textarea></div>
+            <div class="field"><label data-i18n="lblFaq"></label><textarea id="s-faq"></textarea></div>
+            <div class="field checkbox-row"><input type="checkbox" id="s-open"><label for="s-open" style="margin:0;" data-i18n="lblOpenSubmission"></label></div>
+            <button type="submit" class="btn" data-i18n="btnSaveSettings"></button>
+            <div id="settings-status" class="status-msg"></div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ================= IT ================= -->
+  <div id="role-it" hidden>
+    <section id="it-lock" class="auth-shell">
+      <div class="card"><div class="lock-box">
+        <div class="auth-icon">🛠</div>
+        <div class="auth-eyebrow" data-i18n="heroEyebrow"></div>
+        <h2 style="margin-bottom:6px;" data-i18n="itLockTitle"></h2>
+        <p class="subtext" data-i18n="itLockSub"></p>
+        <input type="password" id="it-pass" autocomplete="current-password" data-i18n-placeholder="phPassIt">
+        <label class="remember-row"><input type="checkbox" id="it-remember"><span data-i18n="rememberDevice"></span></label>
+        <div><button class="btn block" id="it-unlock-btn" data-i18n="btnLogin"></button></div>
+        <div id="it-lock-msg" class="status-msg err"></div>
+      </div></div>
+    </section>
+
+    <div id="it-app" hidden>
+      <div class="card">
+        <h2 data-i18n="itTitle"></h2>
+        <p class="subtext" data-i18n="itSub"></p>
+        <div class="filters">
+          <select id="itf-status"></select>
+        </div>
+        <div id="it-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var MKT_PASSCODE = "MKT-AUTOCLIK26";
+  var IT_PASSCODE = "IT-AUTOCLIK26";
+  var STORAGE_KEY = "autoclik_bughunter_profile_v2";
+  var THEME_KEY = "autoclik_bh_theme";
+  var LANG_KEY = "autoclik_bh_lang";
+
+  // ---------------- i18n ----------------
+  var TR = {
+    th: {
+      heroEyebrow:"AUTOCLIK · แคมเปญภายในองค์กร",
+      onboardStep0:"แตะเพื่อปลุกบั๊กกี้", onboardStep1:"เจอบั๊กแล้ว!", onboardStep2:"มาช่วยกันหาบั๊กด้วยกัน",
+      onboardStep3:"พร้อมแจ้ง Bug หรือยัง?", onboardStep3Sub:"เจอปัญหาที่ไหน ส่งรายละเอียดมา ช่วยกันทำให้แอปดีขึ้น",
+      onboardHint:"แตะหน้าจอเพื่อไปต่อ", onboardBtnStart:"เริ่มกันเลย!",
+      onboardSticky1:"แอปดี\nบั๊กน้อยลง", onboardSticky2:"บั๊กเล็ก\nกระทบใหญ่", onboardSticky3:"โปรดักต์ดีขึ้น\nคนใช้มีความสุข", onboardSticky4:"Debug วันนี้\nดีขึ้นพรุ่งนี้", onboardBadge:"ภารกิจล่าบั๊ก",
+      lpTitle1:"พนักงาน", lpTitle2:"เข้าสู่ระบบ", lpSub:"กรอกข้อมูลเพื่อเข้าร่วมกิจกรรม", lpBubble:"มาร่วมล่า\nBUG ไปด้วยกัน!", btnStartActivity:"เริ่มกิจกรรม",
+      phName:"กรอกชื่อ-นามสกุล", phEmpId:"กรอกรหัสพนักงาน", phPosition:"กรอกตำแหน่ง", phPhone:"เช่น 08x-xxx-xxxx หรืออีเมลภายใน",
+      rememberMe:"จดจำข้อมูลของฉันบนอุปกรณ์นี้", recentLabel:"ใช้ข้อมูลที่เคยกรอก", forgetEntry:"ลบ", rememberDevice:"จดจำอุปกรณ์นี้ (30 วัน)", staffExit:"🔒 ออกจากโหมดทีมงาน",
+      heroTaglineDefault:"ลองก่อนลูกค้า เจอก่อนเปิดจริง",
+      heroPeriod:"ระยะเวลากิจกรรม", heroLeft:"เหลือเวลา", daysUnit:"วัน", ended:"สิ้นสุดแล้ว",
+      roleEmployee:"👤 พนักงาน", roleMarketing:"📣 Marketing", roleIt:"🛠 IT / Dev",
+      loginTitle:"เข้าร่วมกิจกรรม", loginSubtext:"กรอกครั้งเดียว ระบบจะจำข้อมูลไว้ในเครื่องนี้สำหรับครั้งต่อไป",
+      lblEmpId:"รหัสพนักงาน", lblName:"ชื่อ–นามสกุล", lblCompany:"บริษัท / หน่วยงาน", phCompanySel:"เลือกบริษัท / หน่วยงาน", phCompany:"เช่น ฮอนด้ามาลีวรรณ",
+      lblBranch:"ฝ่าย / สาขา", phBranch:"เลือกสาขา", lblDept:"แผนก", phDept:"เลือกแผนก", lblPosition:"ตำแหน่ง", lblPhone:"เบอร์โทร / Email ภายใน (ถ้ามี)", btnStart:"เริ่มใช้งาน",
+      tabHome:"หน้าหลัก", tabMission:"ภารกิจ", tabReport:"แจ้ง Bug", tabMyBugs:"Bug ของฉัน", tabRules:"กติกา/รางวัล",
+      progressTitle:"ความคืบหน้ากิจกรรม", campaignActivityTitle:"Campaign Activity",
+      campaignActivitySub:"ภาพรวมการมีส่วนร่วมของทุกสาขา (ไม่มีการจัดอันดับรายบุคคล)",
+      btnReportBug:"แจ้ง Bug", dsReportBug:"พบปัญหาระหว่างทดลองใช้แอป",
+      btnMyBugs:"Bug ของฉัน", dsMyBugs:"ดูสถานะรายการที่เคยส่ง",
+      btnMission:"ภารกิจทดสอบ", dsMission:"มีอะไรให้ลองบ้าง",
+      btnRules:"กติกาและรางวัล", dsRules:"อ่านก่อนเริ่มล่าบั๊ก",
+      homeHint:'💬 มีข้อสงสัย ดูวิธีใช้งานได้ที่แท็บ "กติกา/รางวัล" ด้านล่างของหน้านั้น',
+      statTotal:"Bug ที่ส่ง", statVerified:"ยืนยันแล้ว", statReviewing:"กำลังตรวจสอบ", statDuplicate:"พบซ้ำ", statInsight:"ข้อเสนอแนะ",
+      progressNoDates:"ทีมงานยังไม่ได้กำหนดวันที่ของกิจกรรม", progressEnded:"กิจกรรมสิ้นสุดแล้ว",
+      progressDaysLeft:function(n){ return "เหลืออีก "+n+" วัน — ยังมีเวลาช่วยกันค้นหา ก่อน Application ไปถึงมือลูกค้า"; },
+      campParticipants:"พนักงานร่วมทดสอบ", campVerified:"ปัญหาที่ยืนยันแล้ว", campFixed:"Bug ที่แก้ไขแล้ว",
+      missionTitle:"ภารกิจทดสอบ", missionSub:"ใช้เพื่อนำทางการทดลองใช้งานเท่านั้น ไม่มีคะแนนสะสมจากภารกิจ", missionBtn:"แจ้ง Bug จากภารกิจนี้",
+      reportClosedNotice:"ขณะนี้ปิดรับรายงานชั่วคราว กรุณาตรวจสอบประกาศจากทีมการตลาด",
+      reportTitle:"แจ้ง Bug", reportSub:"กรอกให้ครบ ใช้เวลาประมาณ 1–2 นาที",
+      lblType:"ประเภทรายงาน", typeBug:"🐞 พบปัญหา (Bug)", typeInsight:"💡 ข้อเสนอแนะ",
+      typeBugShort:"บั๊ก", typeInsightShort:"ข้อเสนอแนะ",
+      stepWhatTitle:"จุดที่พบปัญหา", stepDetailsTitle:"รายละเอียดปัญหา", stepEvidenceTitle:"อุปกรณ์ & หลักฐาน", stepConfirmTitle:"ยืนยันและส่ง",
+      reportProgressLabel:function(done,total){ return "กรอกแล้ว "+done+"/"+total+" ส่วน"; },
+      lblModule:"เจอที่ไหน?", phModule:"เลือกจุดที่พบปัญหา",
+      lblDesc:"เกิดอะไรขึ้น?", phDesc:"เช่น กดรับ Coupon แล้ว Coupon ไม่เข้า My Coupon",
+      lblSteps:"ก่อนเกิดปัญหาทำอะไร?", phSteps:"เช่น Login → Promotion → เลือก Coupon → กดรับสิทธิ์",
+      lblOs:"ระบบ", phSelect:"เลือก", lblDeviceModel:"รุ่นมือถือ", phDeviceModel:"เช่น iPhone 13", lblAppVer:"Version แอป (ถ้าทราบ)",
+      lblPhoto:"แนบรูปภาพ (แคปหน้าจอ) — สูงสุด 10 รูป", photoDropHint:"ลากรูปมาวาง หรือ Ctrl+V วางรูปที่แคปไว้ได้เลย (แนบได้สูงสุด 10 รูป)", btnChoosePhoto:"เลือกรูปภาพ", btnRemovePhoto:"ลบรูป",
+      photoUploading:"กำลังอัปโหลด...", photoReady:"แนบรูปแล้ว ✓", photoUploadFail:"อัปโหลดไม่สำเร็จ ลองใหม่อีกครั้ง", photoTooLarge:"ไฟล์รูปใหญ่เกินไป", photoNotImage:"รองรับเฉพาะไฟล์รูปภาพ", photoNoCapability:"อัปโหลดรูปยังไม่พร้อมใช้งานในเบราว์เซอร์นี้ ใช้ช่องแนบลิงก์ด้านล่างแทนได้",
+      photoMaxReached:"แนบรูปได้สูงสุด 10 รูป หากมีมากกว่านี้ กรุณาอัปโหลดขึ้น Google Drive แล้ววางลิงก์ในช่องด้านล่างแทน",
+      lblLink:"แนบลิงก์เพิ่มเติม (ถ้ามี)", phLink:"วางลิงก์ Google Drive / LINE OpenChat เพิ่มเติม (ไม่บังคับ)",
+      linkWarning:"⚠️ ห้ามแนบภาพที่มีข้อมูลลูกค้าจริงหรือข้อมูลส่วนบุคคลที่ไม่เกี่ยวข้องกับการทดสอบ",
+      lblRepeat:"ลองทำอีกครั้งแล้วเกิดปัญหาเหมือนเดิมหรือไม่?", repeatAgain:"เกิดอีก", repeatNotAgain:"ไม่เกิดอีก", repeatNotTried:"ยังไม่ได้ลอง",
+      btnSubmitReport:"ส่งรายงาน",
+      errFillAll:"กรุณากรอกข้อมูลผู้ใช้งานก่อน", errRequired:"กรุณาเลือกจุดที่พบปัญหา และอธิบายรายละเอียด",
+      errNotReady:"ระบบยังไม่พร้อม ลองรีเฟรชหน้านี้", errSubmitFail:"ส่งไม่สำเร็จ",
+      dbUnavailable:"⚠️ ไม่พบการเชื่อมต่อฐานข้อมูล กรุณารีเฟรชหน้าเว็บ หรือลองเปิดผ่านเบราว์เซอร์ Chrome/Safari เวอร์ชันล่าสุด",
+      dbTimeout:"⚠️ การเชื่อมต่อฐานข้อมูลใช้เวลานานผิดปกติ กรุณารีเฟรชหน้าเว็บ",
+      syncErrorPrefix:"⚠️ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ (โค้ดข้อผิดพลาด:",
+      successTitle:"🐞 รับรายงานเรียบร้อยแล้ว", successLabel:"หมายเลข",
+      successBody:"ทีมงานจะตรวจสอบรายการที่แจ้ง และรายการที่ได้รับการยืนยันว่าเป็น Bug จริงจะถูกนำไปพิจารณาในกิจกรรม",
+      btnAgain:"แจ้ง Bug เพิ่ม", btnGoMyBugs:"ดู Bug ของฉัน",
+      mybugsTitle:"Bug ของฉัน", mybugsEmpty:"ยังไม่มีรายงานที่ส่ง ลองแจ้ง Bug แรกของคุณดูสิ!", dataLoading:"⏳ กำลังโหลดข้อมูล...",
+      rulesTitle:"กติกาและรางวัล", rulesPeriodPrefix:"ระยะเวลากิจกรรม:",
+      award1tt:"🏆 Bug Hunter Champion", award1ds:"ผู้ค้นพบ Bug จริงมากที่สุด",
+      award2tt:"🔥 Highest Impact Bug", award2ds:"ผู้ค้นพบ Bug ที่ส่งผลกระทบต่อการใช้งานมากที่สุด",
+      award3tt:"🌟 Most Active Tester", award3ds:"ผู้ที่มีส่วนร่วมกับกิจกรรมอย่างต่อเนื่อง",
+      award4tt:"💡 Best Insight", award4ds:"ผู้ให้ข้อเสนอแนะที่เป็นประโยชน์ต่อประสบการณ์ผู้ใช้งานมากที่สุด",
+      noticeHidden:"การจัดอันดับและคะแนนทั้งหมดจะถูกประเมินโดยทีมงาน และจะไม่เปิดเผยคะแนนระหว่างกิจกรรม",
+      noticeCount:"จำนวน Report ที่ส่ง ไม่ได้หมายความว่าจะถูกนับเป็น Bug ทั้งหมด ต้องผ่านการตรวจสอบก่อน",
+      faqTitle:"คำถามที่พบบ่อย", editProfile:"แก้ไขข้อมูลของฉัน",
+      myActivityTitle:"กิจกรรมของฉัน", btnLogout:"ออกจากระบบ / เปลี่ยนผู้ใช้", logoutConfirmShort:"กดอีกครั้งเพื่อยืนยัน", logoutConfirm:"ต้องการออกจากระบบและล้างข้อมูลผู้ใช้บนเครื่องนี้ใช่หรือไม่? (ข้อมูลบั๊กที่แจ้งไปแล้วจะยังอยู่ในระบบ)",
+      whoIdPrefix:"รหัสพนักงาน:",
+      mktLockTitle:"เข้าสู่ระบบ Marketing Admin", mktLockSub:"สำหรับทีมการตลาดที่บริหารกิจกรรมเท่านั้น", phPassMkt:"รหัสผ่าน Marketing",
+      btnLogin:"เข้าสู่ระบบ", errWrongPass:"รหัสผ่านไม่ถูกต้อง",
+      dashTitle:"ภาพรวมกิจกรรม", dashBranchTitle:"Participation ตามสาขา", dashDeptTitle:"Participation ตามฝ่าย/แผนก",
+      exportTitle:"Export", exportSub:"ดาวน์โหลดรายการ Report ทั้งหมดเป็นไฟล์ CSV", btnExport:"Export CSV",
+      statParticipants:"ผู้เข้าร่วม", statTotalReports:"Report ทั้งหมด", statToday:"วันนี้", noData:"ยังไม่มีข้อมูล",
+      exportOk:"ดาวน์โหลดแล้ว", exportFail:"ผู้ใช้ยกเลิก หรือดาวน์โหลดไม่สำเร็จ",
+      exportUnavailable:"ฟีเจอร์ดาวน์โหลดไม่พร้อมใช้งานในมุมมองนี้", exportNoView:"ไม่สามารถดาวน์โหลดได้ในมุมมองนี้",
+      reportsTitle:"Reports ทั้งหมด", filterAllStatus:"ทุกสถานะ", filterAllBranch:"ทุกสาขา", filterAllDept:"ทุกแผนก", filterAllOs:"ทุกระบบ", filterAllType:"ทุกประเภท",
+      noMatch:"ไม่มีรายงานตรงกับตัวกรอง",
+      participantsTitle:"ผู้เข้าร่วม", noParticipants:"ยังไม่มีผู้เข้าร่วม", reportsCountSuffix:"รายงาน", verifiedCountSuffix:"ยืนยัน",
+      awardTitle:"Award Management", awardSub:"ระบบเสนอผู้สมัครจากข้อมูล ทีมสามารถยืนยัน/เลือกเองก่อน Finalize",
+      finalizedBanner:"✅ ผลรางวัลถูกสรุปแล้ว — พร้อมประกาศ", btnFinalize:"Finalize Result", btnReopen:"แก้ไขผลอีกครั้ง",
+      suggestPrefix:"ระบบแนะนำ:", noDataAward:"ยังไม่มีข้อมูล", bugsUnit:"บั๊ก",
+      impactListLabel:function(n){ return "รายการ Impact สูง (High) ที่ยืนยันแล้ว: "+n+" รายการ"; },
+      insightListLabel:function(n){ return "เลือกจากข้อเสนอแนะที่ส่งเข้ามา: "+n+" รายการ (เลือกเองโดย Marketing + IT)"; },
+      selectWinnerPh:"— เลือกผู้ชนะ —", selectReportPh:"— เลือกรายการ —", savedAward:"บันทึกผลรางวัลแล้ว", saveFail:"บันทึกไม่สำเร็จ", dateRangeInvalid:"วันปิดกิจกรรมต้องไม่ก่อนวันเริ่ม",
+      settingsTitle:"ตั้งค่ากิจกรรม", lblCampaignName:"ชื่อกิจกรรม", lblTagline:"แท็กไลน์",
+      lblStartDate:"วันเริ่มกิจกรรม", lblEndDate:"วันปิดกิจกรรม", lblTestLink:"Link AUTOCLIK Test App",
+      lblAnnounce:"ประกาศหน้าแรก", phAnnounce:"เช่น 🔥 เหลือเวลาอีก 3 วัน!",
+      lblFaq:"FAQ (หนึ่งบรรทัดต่อหนึ่งข้อ รูปแบบ คำถาม | คำตอบ)", lblOpenSubmission:"เปิดรับรายงาน Bug",
+      btnSaveSettings:"บันทึกการตั้งค่า", savedSettings:"บันทึกการตั้งค่าแล้ว",
+      itLockTitle:"เข้าสู่ระบบ IT / Developer", itLockSub:"สำหรับทีมตรวจสอบ (verify) เท่านั้น", phPassIt:"รหัสผ่าน IT",
+      itTitle:"Bug Verification", itSub:"ตรวจสอบรายงาน กำหนดผล Impact และหมายเหตุทางเทคนิค",
+      itFilterDefault:"ทุกสถานะ (ค่าเริ่มต้น: รอ/กำลังตรวจ)", impactPh:"Impact —", dupPh:"Duplicate of BUG-xxxxx", notePh:"หมายเหตุทางเทคนิค",
+      itLabelStatus:"สถานะ", itLabelImpact:"Impact", itLabelDup:"ซ้ำกับ", itLabelNote:"หมายเหตุทางเทคนิค",
+      noMatchIt:"ไม่มีรายการตรงกับตัวกรอง", savedHint:"บันทึกแล้ว ✓", saveFailHint:"บันทึกไม่สำเร็จ", notReadyHint:"ระบบยังไม่พร้อม", btnConfirmVerify:"ยืนยันการตรวจสอบ",
+      evidenceLink:"ลิงก์หลักฐาน", impactPrefix:"ผลกระทบ:", dupOfLabel:"ซ้ำกับ:", itNoteLabel:"หมายเหตุ IT:", defaultFaq:"แจ้ง Bug ได้กี่ครั้ง? | ได้ไม่จำกัดจำนวนครั้ง ยิ่งพบมากยิ่งดี\nต้องแนบรูปทุกครั้งไหม? | ไม่จำเป็น หากถ่ายไม่ได้ให้ส่งได้เลย\nคะแนนจะเห็นระหว่างกิจกรรมไหม? | ไม่เปิดเผยระหว่างกิจกรรม ทีมงานจะประกาศผลเมื่อจบแคมเปญ",
+      statusLabel:{pending:"รอตรวจสอบ", reviewing:"กำลังตรวจสอบ", verified:"ยืนยันแล้ว", duplicate:"พบซ้ำ", suggestion:"ข้อเสนอแนะ", not_bug:"ไม่พบปัญหา", fixed:"แก้ไขแล้ว"},
+      impactLabel:{high:"สูง", medium:"กลาง", low:"ต่ำ"},
+      branch:{hq:"สำนักงานใหญ่", b001:"สาขา 001", b002:"สาขา 002", b003:"สาขา 003", b004:"สาขา 004", b005:"สาขา 005", b006:"สาขา 006", b007:"สาขา 007", b008:"สาขา 008", b009:"สาขา 009", b010:"สาขา 010", b011:"สาขา 011", b012:"สาขา 012", b013:"สาขา 013", b014:"สาขา 014", b015:"สาขา 015", other:"อื่นๆ"},
+      department:{
+        "IT-CENTER":"IT-CENTER","IT-SUPPORT":"IT-SUPPORT","SALE-CENTER":"SALE-CENTER","SECRETARY":"SECRETARY",
+        "กฎหมายและบริหารข้อมูลส่วนบุคคลองค์กร":"กฎหมายและบริหารข้อมูลส่วนบุคคลองค์กร","การตลาด":"การตลาด","การเงิน":"การเงิน","ขาย":"ขาย",
+        "คลังสินค้า":"คลังสินค้า","จัดซื้อจัดจ้าง":"จัดซื้อจัดจ้าง","ช่าง":"ช่าง","ทรัพยากรบุคคล":"ทรัพยากรบุคคล",
+        "ที่ปรึกษาการขาย HONDA":"ที่ปรึกษาการขาย HONDA","ที่ปรึกษาการบริการ":"ที่ปรึกษาการบริการ","ธุรกรรมขาย":"ธุรกรรมขาย","ธุรกรรมบริการ":"ธุรกรรมบริการ",
+        "บริการทั่วไป":"บริการทั่วไป","บริหาร":"บริหาร","บริหารงานก่อสร้างและซ่อมบำรุง":"บริหารงานก่อสร้างและซ่อมบำรุง","บริหารงานทั่วไป":"บริหารงานทั่วไป",
+        "บัญชีลูกหนี้":"บัญชีลูกหนี้","บัญชีเจ้าหนี้":"บัญชีเจ้าหนี้","บัญชีแยกประเภททั่วไป":"บัญชีแยกประเภททั่วไป","บัญชีและการเงิน":"บัญชีและการเงิน",
+        "ประกันภัย":"ประกันภัย","ฝึกอบรม":"ฝึกอบรม","พัฒนาระบบ":"พัฒนาระบบ","รับ-ส่งเอกสาร":"รับ-ส่งเอกสาร","ลูกค้าสัมพันธ์":"ลูกค้าสัมพันธ์",
+        "วางแผนธุรกิจและบริหารธุรกิจ (Strategy)":"วางแผนธุรกิจและบริหารธุรกิจ (Strategy)","วางแผนและพัฒนาธุรกิจ (Planing)":"วางแผนและพัฒนาธุรกิจ (Planing)",
+        "ศูนย์บริการ":"ศูนย์บริการ","ศูนย์บริการ(ช่าง CLK)":"ศูนย์บริการ(ช่าง CLK)","ศูนย์บริการ CLK":"ศูนย์บริการ CLK","ศูนย์บริการ HMW":"ศูนย์บริการ HMW",
+        "เงินเดือนและค่าแรงพนักงาน":"เงินเดือนและค่าแรงพนักงาน","เทคโนโลยีสารสนเทศ":"เทคโนโลยีสารสนเทศ","แคชเชียร์":"แคชเชียร์"
+      },
+      module:{register:"สมัครสมาชิก", otp:"OTP", login:"Login", member_info:"ข้อมูลสมาชิก", point:"Point", coupon:"Coupon", promotion:"Promotion", vehicle:"Vehicle (รถของฉัน)", service_history:"Service History", booking:"Booking", notification:"Notification", link_contact:"Link / Contact", ui_text:"UI / ข้อความ", other:"อื่นๆ"},
+      missions:[
+        {tt:"สมัครสมาชิกใหม่", ds:"ลอง Register → OTP → Login", module:"register"},
+        {tt:"สมาชิกเดิม", ds:"ลอง Login และตรวจสอบข้อมูลสมาชิก", module:"login"},
+        {tt:"รถของฉัน", ds:"เพิ่มรถ / แก้ไขรถ / เพิ่มหลายคัน", module:"vehicle"},
+        {tt:"Point & Coupon", ds:"ดูคะแนน / รับคูปอง / ตรวจเงื่อนไข", module:"coupon"},
+        {tt:"Promotion", ds:"เปิดดู Promotion / Link / Detail", module:"promotion"},
+        {tt:"Service", ds:"ประวัติบริการ / Booking / Contact", module:"booking"},
+        {tt:"Free Hunt", ds:"ลองกดให้ทั่ว Application หากพบอะไรผิดปกติ แจ้งได้ทันที", module:"other"}
+      ]
+    },
+    en: {
+      heroEyebrow:"AUTOCLIK · Internal Campaign",
+      onboardStep0:"Tap to wake Buggy", onboardStep1:"Bug spotted!", onboardStep2:"Help us find the bugs",
+      onboardStep3:"Ready to report a bug?", onboardStep3Sub:"Spot an issue, send the details, and help improve the app.",
+      onboardHint:"Tap anywhere to continue", onboardBtnStart:"Start bug report",
+      onboardSticky1:"Good apps\nfewer bugs", onboardSticky2:"Small bugs\nbig impact", onboardSticky3:"Better products\nbrighter people", onboardSticky4:"Debug today\nbetter tomorrow", onboardBadge:"Bug Hunter Mission",
+      lpTitle1:"Employee", lpTitle2:"Sign in", lpSub:"Fill in your details to join the campaign", lpBubble:"Join the\nBUG hunt!", btnStartActivity:"Start",
+      phName:"Enter full name", phEmpId:"Enter employee ID", phPosition:"Enter position", phPhone:"e.g. 08x-xxx-xxxx or internal email",
+      rememberMe:"Remember my details on this device", recentLabel:"Use a previous entry", forgetEntry:"Remove", rememberDevice:"Remember this device (30 days)", staffExit:"🔒 Exit staff mode",
+      heroTaglineDefault:"Test it hard, before the customer does",
+      heroPeriod:"Campaign period", heroLeft:"Time left", daysUnit:"days", ended:"Ended",
+      roleEmployee:"👤 Employee", roleMarketing:"📣 Marketing", roleIt:"🛠 IT / Dev",
+      loginTitle:"Join the Campaign", loginSubtext:"Fill in once — this device will remember it next time",
+      lblEmpId:"Employee ID", lblName:"Full name", lblCompany:"Company / Unit", phCompanySel:"Select company / unit", phCompany:"e.g. Honda Maliwan",
+      lblBranch:"Department / Branch", phBranch:"Select branch", lblDept:"Department (function)", phDept:"Select department", lblPosition:"Position", lblPhone:"Internal phone / email (optional)", btnStart:"Get Started",
+      tabHome:"Home", tabMission:"Missions", tabReport:"Report Bug", tabMyBugs:"My Bugs", tabRules:"Rules/Rewards",
+      progressTitle:"Campaign Progress", campaignActivityTitle:"Campaign Activity",
+      campaignActivitySub:"Participation overview across all branches (no individual ranking shown)",
+      btnReportBug:"Report a Bug", dsReportBug:"Found something wrong while testing",
+      btnMyBugs:"My Bugs", dsMyBugs:"Check the status of your reports",
+      btnMission:"Test Missions", dsMission:"See what to try",
+      btnRules:"Rules & Rewards", dsRules:"Read before you start hunting",
+      homeHint:'💬 Questions? See the FAQ at the bottom of the "Rules/Rewards" tab',
+      statTotal:"Reports sent", statVerified:"Verified", statReviewing:"In review", statDuplicate:"Duplicate", statInsight:"Suggestions",
+      progressNoDates:"Campaign dates not set yet", progressEnded:"Campaign has ended",
+      progressDaysLeft:function(n){ return n+" days left — help us find more before it reaches customers"; },
+      campParticipants:"Employees participating", campVerified:"Verified issues", campFixed:"Bugs fixed",
+      missionTitle:"Test Missions", missionSub:"For guidance only — missions don't earn points", missionBtn:"Report a bug from this mission",
+      reportClosedNotice:"Bug submissions are temporarily closed. Please check the marketing team's announcement.",
+      reportTitle:"Report a Bug", reportSub:"Fill in all fields — takes about 1–2 minutes",
+      lblType:"Report type", typeBug:"🐞 Found an issue (Bug)", typeInsight:"💡 Suggestion",
+      typeBugShort:"Bug", typeInsightShort:"Suggestion",
+      stepWhatTitle:"What & Where", stepDetailsTitle:"Describe the Issue", stepEvidenceTitle:"Device & Evidence", stepConfirmTitle:"Confirm & Submit",
+      reportProgressLabel:function(done,total){ return done+" of "+total+" sections filled"; },
+      lblModule:"Where did you find it?", phModule:"Select where the issue occurred",
+      lblDesc:"What happened?", phDesc:"e.g. Tapped 'claim coupon' but it didn't show up in My Coupon",
+      lblSteps:"What did you do before it happened?", phSteps:"e.g. Login → Promotion → Select coupon → Claim",
+      lblOs:"OS", phSelect:"Select", lblDeviceModel:"Phone model", phDeviceModel:"e.g. iPhone 13", lblAppVer:"App version (if known)",
+      lblPhoto:"Attach photos (screenshots) — up to 10", photoDropHint:"Drag & drop images, or Ctrl+V to paste a screenshot (up to 10 photos)", btnChoosePhoto:"Choose photo(s)", btnRemovePhoto:"Remove photo",
+      photoUploading:"Uploading...", photoReady:"Photo attached ✓", photoUploadFail:"Upload failed, please try again", photoTooLarge:"Image file is too large", photoNotImage:"Only image files are supported", photoNoCapability:"Photo upload isn't available in this browser — use the link field below instead",
+      photoMaxReached:"You can attach up to 10 photos. For more, please upload to Google Drive and paste the link below instead.",
+      lblLink:"Attach an additional link (optional)", phLink:"Paste an additional Google Drive / LINE OpenChat link (optional)",
+      linkWarning:"⚠️ Do not attach images containing real customer data or unrelated personal information",
+      lblRepeat:"Did it happen again when you tried once more?", repeatAgain:"Yes, again", repeatNotAgain:"No", repeatNotTried:"Haven't tried",
+      btnSubmitReport:"Submit Report",
+      errFillAll:"Please fill in your profile first", errRequired:"Please select where and describe the issue",
+      errNotReady:"System not ready, please refresh", errSubmitFail:"Submit failed",
+      dbUnavailable:"⚠️ Could not connect to the database. Please refresh the page, or try the latest Chrome/Safari.",
+      dbTimeout:"⚠️ The database connection is taking unusually long. Please refresh the page.",
+      syncErrorPrefix:"⚠️ Failed to load data. Please refresh the page. (error code:",
+      successTitle:"🐞 Report received", successLabel:"Reference No.",
+      successBody:"Our team will review your report. Verified bugs will be considered for the campaign awards.",
+      btnAgain:"Report another bug", btnGoMyBugs:"View my bugs",
+      mybugsTitle:"My Bugs", mybugsEmpty:"No reports yet — send your first bug report!", dataLoading:"⏳ Loading data...",
+      rulesTitle:"Rules & Rewards", rulesPeriodPrefix:"Campaign period:",
+      award1tt:"🏆 Bug Hunter Champion", award1ds:"Who found the most verified bugs",
+      award2tt:"🔥 Highest Impact Bug", award2ds:"Who found the bug with the highest impact",
+      award3tt:"🌟 Most Active Tester", award3ds:"Who participated the most consistently",
+      award4tt:"💡 Best Insight", award4ds:"Who gave the most useful UX suggestion",
+      noticeHidden:"All rankings and scores are evaluated by the team and are not disclosed during the campaign",
+      noticeCount:"The number of reports sent doesn't mean they all count as bugs — each must be verified first",
+      faqTitle:"FAQ", editProfile:"Edit my profile",
+      myActivityTitle:"My Activity", btnLogout:"Log out / switch user", logoutConfirmShort:"Tap again to confirm", logoutConfirm:"Log out and clear your profile on this device? (Bugs you've already reported stay in the system.)",
+      whoIdPrefix:"Employee ID:",
+      mktLockTitle:"Marketing Admin Login", mktLockSub:"For the marketing team managing the campaign only", phPassMkt:"Marketing passcode",
+      btnLogin:"Log in", errWrongPass:"Incorrect passcode",
+      dashTitle:"Campaign Overview", dashBranchTitle:"Participation by Branch", dashDeptTitle:"Participation by Company/Unit",
+      exportTitle:"Export", exportSub:"Download all reports as a CSV file", btnExport:"Export CSV",
+      statParticipants:"Participants", statTotalReports:"Total Reports", statToday:"Today", noData:"No data yet",
+      exportOk:"Downloaded", exportFail:"Cancelled or download failed",
+      exportUnavailable:"Download isn't available in this view", exportNoView:"Can't download from this view",
+      reportsTitle:"All Reports", filterAllStatus:"All statuses", filterAllBranch:"All branches", filterAllDept:"All departments", filterAllOs:"All OS", filterAllType:"All types",
+      noMatch:"No reports match the filters",
+      participantsTitle:"Participants", noParticipants:"No participants yet", reportsCountSuffix:"reports", verifiedCountSuffix:"verified",
+      awardTitle:"Award Management", awardSub:"The system suggests candidates from the data — confirm or override before finalizing",
+      finalizedBanner:"✅ Results finalized — ready to announce", btnFinalize:"Finalize Result", btnReopen:"Reopen for editing",
+      suggestPrefix:"Suggested:", noDataAward:"No data yet", bugsUnit:"bugs",
+      impactListLabel:function(n){ return "Verified high-impact reports: "+n; },
+      insightListLabel:function(n){ return "Choose from submitted suggestions: "+n+" (selected manually by Marketing + IT)"; },
+      selectWinnerPh:"— Select winner —", selectReportPh:"— Select report —", savedAward:"Award results saved", saveFail:"Save failed", dateRangeInvalid:"End date cannot be before start date",
+      settingsTitle:"Campaign Settings", lblCampaignName:"Campaign name", lblTagline:"Tagline",
+      lblStartDate:"Start date", lblEndDate:"End date", lblTestLink:"Link to AUTOCLIK Test App",
+      lblAnnounce:"Home announcement", phAnnounce:"e.g. 🔥 3 days left!",
+      lblFaq:"FAQ (one per line, format: Question | Answer)", lblOpenSubmission:"Bug submissions open",
+      btnSaveSettings:"Save settings", savedSettings:"Settings saved",
+      itLockTitle:"IT / Developer Login", itLockSub:"For the verification team only", phPassIt:"IT passcode",
+      itTitle:"Bug Verification", itSub:"Review reports, set Impact, and add technical notes",
+      itFilterDefault:"All statuses (default: pending/in review)", impactPh:"Impact —", dupPh:"Duplicate of BUG-xxxxx", notePh:"Technical note",
+      itLabelStatus:"Status", itLabelImpact:"Impact", itLabelDup:"Duplicate of", itLabelNote:"Technical note",
+      noMatchIt:"No reports match the filter", savedHint:"Saved ✓", saveFailHint:"Save failed", notReadyHint:"System not ready", btnConfirmVerify:"Confirm review",
+      evidenceLink:"Evidence link", impactPrefix:"Impact:", dupOfLabel:"Duplicate of:", itNoteLabel:"IT note:", defaultFaq:"How many bugs can I report? | Unlimited — the more you find, the better\nDo I need to attach a screenshot every time? | Not required — send it even without one if you can't capture it\nWill I see scores during the campaign? | No, scores stay hidden until results are announced",
+      statusLabel:{pending:"Pending", reviewing:"In Review", verified:"Verified", duplicate:"Duplicate", suggestion:"Suggestion", not_bug:"Not a Bug", fixed:"Fixed"},
+      impactLabel:{high:"High", medium:"Medium", low:"Low"},
+      branch:{hq:"Head Office", b001:"Branch 001", b002:"Branch 002", b003:"Branch 003", b004:"Branch 004", b005:"Branch 005", b006:"Branch 006", b007:"Branch 007", b008:"Branch 008", b009:"Branch 009", b010:"Branch 010", b011:"Branch 011", b012:"Branch 012", b013:"Branch 013", b014:"Branch 014", b015:"Branch 015", other:"Other"},
+      department:{
+        "IT-CENTER":"IT-CENTER","IT-SUPPORT":"IT-SUPPORT","SALE-CENTER":"SALE-CENTER","SECRETARY":"Secretary",
+        "กฎหมายและบริหารข้อมูลส่วนบุคคลองค์กร":"Legal & Corporate Data Protection (PDPA)","การตลาด":"Marketing","การเงิน":"Finance","ขาย":"Sales",
+        "คลังสินค้า":"Warehouse","จัดซื้อจัดจ้าง":"Procurement","ช่าง":"Technician","ทรัพยากรบุคคล":"Human Resources",
+        "ที่ปรึกษาการขาย HONDA":"Honda Sales Advisor","ที่ปรึกษาการบริการ":"Service Advisor","ธุรกรรมขาย":"Sales Transactions","ธุรกรรมบริการ":"Service Transactions",
+        "บริการทั่วไป":"General Services","บริหาร":"Administration","บริหารงานก่อสร้างและซ่อมบำรุง":"Construction & Maintenance Management","บริหารงานทั่วไป":"General Administration",
+        "บัญชีลูกหนี้":"Accounts Receivable","บัญชีเจ้าหนี้":"Accounts Payable","บัญชีแยกประเภททั่วไป":"General Ledger","บัญชีและการเงิน":"Accounting & Finance",
+        "ประกันภัย":"Insurance","ฝึกอบรม":"Training","พัฒนาระบบ":"System Development","รับ-ส่งเอกสาร":"Document Courier","ลูกค้าสัมพันธ์":"Customer Relations",
+        "วางแผนธุรกิจและบริหารธุรกิจ (Strategy)":"Business Planning & Strategy","วางแผนและพัฒนาธุรกิจ (Planing)":"Business Planning & Development",
+        "ศูนย์บริการ":"Service Center","ศูนย์บริการ(ช่าง CLK)":"Service Center (CLK Technician)","ศูนย์บริการ CLK":"Service Center CLK","ศูนย์บริการ HMW":"Service Center HMW",
+        "เงินเดือนและค่าแรงพนักงาน":"Payroll","เทคโนโลยีสารสนเทศ":"Information Technology","แคชเชียร์":"Cashier"
+      },
+      module:{register:"Registration", otp:"OTP", login:"Login", member_info:"Member Info", point:"Points", coupon:"Coupon", promotion:"Promotion", vehicle:"Vehicle (My Car)", service_history:"Service History", booking:"Booking", notification:"Notification", link_contact:"Link / Contact", ui_text:"UI / Text", other:"Other"},
+      missions:[
+        {tt:"New Member Sign-up", ds:"Try Register → OTP → Login", module:"register"},
+        {tt:"Existing Member", ds:"Try logging in and check member info", module:"login"},
+        {tt:"My Vehicle", ds:"Add / edit a vehicle / add multiple vehicles", module:"vehicle"},
+        {tt:"Points & Coupons", ds:"Check points / claim a coupon / check conditions", module:"coupon"},
+        {tt:"Promotions", ds:"Open a promotion / links / details", module:"promotion"},
+        {tt:"Service", ds:"Service history / booking / contact", module:"booking"},
+        {tt:"Free Hunt", ds:"Try clicking around the whole app — report anything odd right away", module:"other"}
+      ]
+    }
+  };
+
+  var lang = "th";
+  function t(key){ var v = TR[lang][key]; return v===undefined ? key : v; }
+  function bLabel(code){ return TR[lang].branch[code] || code; }
+  function dLabel(code){ return TR[lang].department[code] || code; }
+  function mLabel(code){ return TR[lang].module[code] || code; }
+  function sLabel(code){ return TR[lang].statusLabel[code] || code; }
+  var STATUS_ACCENT = {pending:"acc-warn", reviewing:"acc-info", verified:"acc-good", duplicate:"acc-muted", suggestion:"acc-insight", not_bug:"acc-muted", fixed:"acc-fixed"};
+  function accClass(status){ return STATUS_ACCENT[status] || ""; }
+  function statTileHTML(icon, tone, label, value){
+    return '<div class="stat-tile'+(tone?' tone-'+tone:'')+'"><div class="icon">'+icon+'</div><div class="num mono">'+value+'</div><div class="lbl">'+label+'</div></div>';
+  }
+  function iLabel(code){ return TR[lang].impactLabel[code] || code; }
+  function typeLabel(type){ return type==="bug" ? TR[lang].typeBugShort : TR[lang].typeInsightShort; }
+
+  var BRANCH_ORDER = ["hq","b001","b002","b003","b004","b005","b006","b007","b008","b009","b010","b011","b012","b013","b014","b015","other"];
+  var DEPARTMENT_ORDER = ["IT-CENTER","IT-SUPPORT","SALE-CENTER","SECRETARY",
+    "กฎหมายและบริหารข้อมูลส่วนบุคคลองค์กร","การตลาด","การเงิน","ขาย","คลังสินค้า","จัดซื้อจัดจ้าง","ช่าง","ทรัพยากรบุคคล",
+    "ที่ปรึกษาการขาย HONDA","ที่ปรึกษาการบริการ","ธุรกรรมขาย","ธุรกรรมบริการ","บริการทั่วไป","บริหาร",
+    "บริหารงานก่อสร้างและซ่อมบำรุง","บริหารงานทั่วไป","บัญชีลูกหนี้","บัญชีเจ้าหนี้","บัญชีแยกประเภททั่วไป","บัญชีและการเงิน",
+    "ประกันภัย","ฝึกอบรม","พัฒนาระบบ","รับ-ส่งเอกสาร","ลูกค้าสัมพันธ์",
+    "วางแผนธุรกิจและบริหารธุรกิจ (Strategy)","วางแผนและพัฒนาธุรกิจ (Planing)",
+    "ศูนย์บริการ","ศูนย์บริการ(ช่าง CLK)","ศูนย์บริการ CLK","ศูนย์บริการ HMW",
+    "เงินเดือนและค่าแรงพนักงาน","เทคโนโลยีสารสนเทศ","แคชเชียร์"];
+  var MODULE_ORDER = ["register","otp","login","member_info","point","coupon","promotion","vehicle","service_history","booking","notification","link_contact","ui_text","other"];
+  var STATUS_ORDER = ["pending","reviewing","verified","duplicate","suggestion","not_bug","fixed"];
+
+  function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function sameId(a,b){ return String(a||"").trim().toLowerCase() === String(b||"").trim().toLowerCase(); }
+  function safeLink(url){
+    var u = String(url||"").trim();
+    if(!u) return "";
+    if(/^https?:\/\//i.test(u)) return u;
+    return "";
+  }
+  function fmtDate(ts){ try{ var d=new Date(ts); var locale = lang==="th"?"th-TH":"en-GB"; return d.toLocaleDateString(locale,{day:"2-digit",month:"short"})+" "+d.toLocaleTimeString(locale,{hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+  function bugCode(id){ return "BUG-" + (id||"").slice(-5).toUpperCase(); }
+
+  // ---------------- theme ----------------
+  function applyTheme(mode){
+    var root = document.documentElement;
+    if(mode==="light") root.setAttribute("data-theme","light");
+    else if(mode==="dark") root.setAttribute("data-theme","dark");
+    else root.removeAttribute("data-theme");
+    document.querySelectorAll("#theme-group button").forEach(function(b){
+      b.setAttribute("aria-pressed", b.dataset.themeChoice===mode ? "true":"false");
+    });
+    try{ localStorage.setItem(THEME_KEY, mode); }catch(e){}
+  }
+  document.getElementById("theme-group").addEventListener("click", function(e){
+    var btn = e.target.closest("button[data-theme-choice]"); if(!btn) return;
+    applyTheme(btn.dataset.themeChoice);
+  });
+
+  // ---------------- language ----------------
+  function populateSelectFromDict(id, order, dictName, placeholderKey){
+    var sel = document.getElementById(id);
+    var current = sel.value;
+    sel.innerHTML = "";
+    if(placeholderKey) sel.appendChild(new Option(t(placeholderKey), ""));
+    order.forEach(function(code){
+      sel.appendChild(new Option(TR[lang][dictName][code], code));
+    });
+    if(current) sel.value = current;
+  }
+
+  var COMPANIES = [
+    {v:"บจ.ฮอนด้ามะลิวัลย์", th:"บจ.ฮอนด้ามะลิวัลย์", en:"Honda Maliwan Co., Ltd."},
+    {v:"บจ.ออโตคลิก บายเอซีจี", th:"บจ.ออโตคลิก บายเอซีจี", en:"Autoclik by ACG Co., Ltd."},
+    {v:"บมจ.ออโตคอร์ปโฮลดิ้ง", th:"บมจ.ออโตคอร์ปโฮลดิ้ง", en:"Autocorp Holding PCL"}
+  ];
+  function normalizeCompany(v){
+    v = (v||"").trim(); if(!v) return "";
+    for(var i=0;i<COMPANIES.length;i++){ if(COMPANIES[i].v===v || COMPANIES[i].en===v) return COMPANIES[i].v; }
+    if(/honda|ฮอนด้า/i.test(v)) return COMPANIES[0].v;
+    if(/autoclik|ออโตคลิก/i.test(v)) return COMPANIES[1].v;
+    if(/autocorp|ออโตคอร์ป/i.test(v)) return COMPANIES[2].v;
+    return v; // unknown legacy value: keep it so old profiles still load
+  }
+  function populateCompany(){
+    var sel = document.getElementById("lg-company"); if(!sel) return;
+    var current = sel.value;
+    sel.innerHTML = "";
+    sel.appendChild(new Option(t("phCompanySel"), ""));
+    COMPANIES.forEach(function(c){ sel.appendChild(new Option(lang==="en" ? c.en : c.th, c.v)); });
+    if(current) setCompanyValue(current);
+  }
+  function setCompanyValue(v){
+    var sel = document.getElementById("lg-company"); if(!sel) return;
+    v = normalizeCompany(v);
+    if(v && !Array.prototype.some.call(sel.options, function(o){ return o.value===v; })) sel.appendChild(new Option(v, v));
+    sel.value = v;
+  }
+  function applyLanguage(){
+    document.documentElement.setAttribute("lang", lang);
+    document.querySelectorAll("[data-i18n]").forEach(function(el){
+      el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el){
+      el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
+    });
+    document.querySelectorAll("#lang-group button").forEach(function(b){
+      b.setAttribute("aria-pressed", b.dataset.langChoice===lang ? "true":"false");
+    });
+
+    populateCompany();
+    populateSelectFromDict("lg-branch", BRANCH_ORDER, "branch", "phBranch");
+    populateSelectFromDict("lg-dept", DEPARTMENT_ORDER, "department", "phDept");
+    populateSelectFromDict("f-module", MODULE_ORDER, "module", "phModule");
+    populateSelectFromDict("mf-branch", BRANCH_ORDER, "branch", "filterAllBranch");
+    populateSelectFromDict("mf-dept", DEPARTMENT_ORDER, "department", "filterAllDept");
+
+    var itSel = document.getElementById("itf-status");
+    var itCur = itSel.value;
+    itSel.innerHTML = "";
+    itSel.appendChild(new Option(t("itFilterDefault"), ""));
+    STATUS_ORDER.forEach(function(code){ itSel.appendChild(new Option(sLabel(code), code)); });
+    itSel.value = itCur;
+
+    var mfSel = document.getElementById("mf-status");
+    var mfCur = mfSel.value;
+    mfSel.innerHTML = "";
+    mfSel.appendChild(new Option(t("filterAllStatus"), ""));
+    STATUS_ORDER.forEach(function(code){ mfSel.appendChild(new Option(sLabel(code), code)); });
+    mfSel.value = mfCur;
+
+    document.getElementById("mission-list").innerHTML = TR[lang].missions.map(function(m,i){
+      var num = (i===TR[lang].missions.length-1) ? "∞" : String(i+1).padStart(2,"0");
+      return '<div class="mission-card"><div class="mission-num">'+num+'</div><div style="flex:1;">' +
+        '<div class="mission-tt">'+escapeHtml(m.tt)+'</div><div class="mission-ds">'+escapeHtml(m.ds)+'</div>' +
+        '<button type="button" class="btn ghost small" style="margin-top:8px;" data-module="'+escapeHtml(m.module)+'">'+t("missionBtn")+'</button>' +
+        '</div></div>';
+    }).join("");
+
+    if(!document.getElementById("s-faq").value){
+      document.getElementById("s-faq").placeholder = TR[lang].defaultFaq;
+    }
+    if(typeof updateReportProgress === "function") updateReportProgress();
+    renderOnboard();
+    renderAll();
+  }
+  document.getElementById("lang-group").addEventListener("click", function(e){
+    var btn = e.target.closest("button[data-lang-choice]"); if(!btn) return;
+    lang = btn.dataset.langChoice;
+    try{ localStorage.setItem(LANG_KEY, lang); }catch(e){}
+    applyLanguage();
+  });
+  document.getElementById("mission-list").addEventListener("click", function(e){
+    var btn = e.target.closest("button[data-module]"); if(!btn) return;
+    document.getElementById("f-module").value = btn.dataset.module;
+    selectEmpTab("report");
+  });
+
+  // ---------------- profile ----------------
+  function loadProfile(){ try{ var raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+  function saveProfile(p){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }catch(e){} }
+  var profile = loadProfile();
+
+  // ---------------- role switching ----------------
+  var roles = ["employee","marketing","it"];
+  function selectRole(r){
+    roles.forEach(function(x){
+      document.getElementById("role-"+x).hidden = x!==r;
+      document.getElementById("rolebtn-"+x).setAttribute("aria-selected", x===r ? "true":"false");
+    });
+    document.body.classList.remove("sheet-open");
+    if(typeof refreshTabsFade === "function") refreshTabsFade();
+  }
+  document.getElementById("rolebtn-employee").addEventListener("click", function(){ selectRole("employee"); });
+  document.getElementById("rolebtn-marketing").addEventListener("click", function(){ selectRole("marketing"); });
+  document.getElementById("rolebtn-it").addEventListener("click", function(){ selectRole("it"); });
+
+  // ---------------- employee sub-tabs ----------------
+  var empTabs = [
+    {btn:"tabbtn-home", panel:"panel-home"}, {btn:"tabbtn-mission", panel:"panel-mission"},
+    {btn:"tabbtn-report", panel:"panel-report"}, {btn:"tabbtn-mybugs", panel:"panel-mybugs"}, {btn:"tabbtn-rules", panel:"panel-rules"}
+  ];
+  function selectEmpTab(name){
+    empTabs.forEach(function(t){
+      var isSel = t.panel === "panel-"+name;
+      document.getElementById(t.btn).setAttribute("aria-selected", isSel?"true":"false");
+      document.getElementById(t.panel).hidden = !isSel;
+    });
+    if(name === "mybugs") renderMyBugs();
+    if(name === "home") renderHome();
+    var activeBtn = document.getElementById("tabbtn-"+name);
+    if(activeBtn) activeBtn.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+    if(typeof refreshTabsFade === "function") refreshTabsFade();
+  }
+  empTabs.forEach(function(tt){ document.getElementById(tt.btn).addEventListener("click", function(){ selectEmpTab(tt.panel.replace("panel-","")); }); });
+  document.querySelectorAll("[data-goto]").forEach(function(b){ b.addEventListener("click", function(){ selectEmpTab(b.dataset.goto); }); });
+
+  // ---------------- scrollable tab-bar edge fade (mobile horizontal scroll hint) ----------------
+  function updateTabsFade(el){
+    var atStart = el.scrollLeft <= 6;
+    var atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 6;
+    el.classList.toggle("has-more-start", !atStart);
+    el.classList.toggle("has-more-end", !atEnd);
+  }
+  var allTabBars = document.querySelectorAll(".tabs");
+  function refreshTabsFade(){
+    allTabBars.forEach(updateTabsFade);
+  }
+  allTabBars.forEach(function(el){
+    el.addEventListener("scroll", function(){ updateTabsFade(el); }, {passive:true});
+  });
+  window.addEventListener("resize", refreshTabsFade);
+  if(window.requestAnimationFrame){ requestAnimationFrame(refreshTabsFade); } else { setTimeout(refreshTabsFade, 50); }
+
+  // ---------------- login ----------------
+  function showLoginOrApp(){
+    var hasProfile = !!(profile && profile.employeeId && profile.employeeName);
+    document.getElementById("emp-login").hidden = hasProfile;
+    document.getElementById("emp-app").hidden = !hasProfile;
+    if(hasProfile){
+      document.body.classList.remove("onboard-intro-active", "onboard-at-login"); // reached the real app -> restore normal chrome
+      renderHome(); renderProfileBar();
+    } else if(!staffMode){
+      document.body.classList.add("onboard-intro-active", "onboard-at-login"); // chrome-free poster-style login form
+    }
+    if(!hasProfile) renderRecent();
+  }
+  var staffMode = false;
+
+  // ---------------- mascot onboarding (Buggy) ----------------
+  var onboardStep = 0;
+  var ONBOARD_STEPS = 4;
+  function renderOnboard(){
+    var card = document.getElementById("onboard-card");
+    if(!card) return;
+    card.setAttribute("data-step", String(onboardStep));
+    card.classList.toggle("is-final", onboardStep === ONBOARD_STEPS-1);
+    document.querySelectorAll("#emp-onboarding .op").forEach(function(l){ l.classList.toggle("on", Number(l.getAttribute("data-i"))===onboardStep); });
+    var fx = document.getElementById("onboard-fx");
+    var caption = document.getElementById("onboard-caption");
+    var hint = document.getElementById("onboard-hint");
+    var startBtn = document.getElementById("onboard-start-btn");
+    var dots = document.querySelectorAll("#onboard-dots span");
+    dots.forEach(function(d,i){ d.classList.toggle("is-active", i===onboardStep); });
+    if(onboardStep === 0){
+      fx.textContent = ""; caption.textContent = t("onboardStep0"); hint.textContent = t("onboardHint");
+      startBtn.hidden = true;
+    } else if(onboardStep === 1){
+      fx.textContent = "❗️"; caption.textContent = t("onboardStep1"); hint.textContent = t("onboardHint");
+      startBtn.hidden = true;
+    } else if(onboardStep === 2){
+      fx.textContent = ""; caption.textContent = t("onboardStep2"); hint.textContent = t("onboardHint");
+      startBtn.hidden = true;
+    } else {
+      fx.textContent = ""; caption.textContent = t("onboardStep3"); hint.textContent = t("onboardStep3Sub");
+      startBtn.hidden = false; startBtn.textContent = t("onboardBtnStart");
+    }
+    card.setAttribute("aria-label", (caption.textContent||"")+(hint.textContent ? " — "+hint.textContent : ""));
+  }
+  function finishOnboarding(){
+    var sec = document.getElementById("emp-onboarding");
+    if(sec) sec.hidden = true;
+    showLoginOrApp();
+  }
+  function advanceOnboard(){
+    if(onboardStep < ONBOARD_STEPS-1){ onboardStep++; renderOnboard(); }
+    else{ finishOnboarding(); }
+  }
+  (function(){
+    var card = document.getElementById("onboard-card");
+    if(!card) return;
+    card.addEventListener("click", function(e){
+      if(e.target.closest("#onboard-start-btn")) return; // handled separately
+      advanceOnboard();
+    });
+    card.addEventListener("keydown", function(e){
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); advanceOnboard(); }
+    });
+    var startBtn = document.getElementById("onboard-start-btn");
+    if(startBtn) startBtn.addEventListener("click", function(e){ e.stopPropagation(); finishOnboarding(); });
+  })();
+
+  // ---------------- input history / autofill (this device only) ----------------
+  var RECENT_KEY = "autoclik_bh_recent_v1";
+  function loadRecent(){ try{ var a = JSON.parse(localStorage.getItem(RECENT_KEY)||"[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+  function storeRecent(a){ try{ localStorage.setItem(RECENT_KEY, JSON.stringify(a.slice(0,5))); }catch(e){} }
+  function saveRecent(p){
+    if(!p || !p.employeeId) return;
+    var a = loadRecent().filter(function(x){ return x && x.employeeId !== p.employeeId; });
+    a.unshift(p); storeRecent(a);
+  }
+  function fillDatalist(id, values){
+    var dl = document.getElementById(id); if(!dl) return;
+    var seen = {}; dl.innerHTML = "";
+    values.forEach(function(v){ v = (v||"").trim(); if(v && !seen[v]){ seen[v] = 1; var o = document.createElement("option"); o.value = v; dl.appendChild(o); } });
+  }
+  function applyRecent(p){
+    document.getElementById("lg-empid").value = p.employeeId||"";
+    document.getElementById("lg-name").value = p.employeeName||"";
+    setCompanyValue(p.company);
+    document.getElementById("lg-branch").value = p.branch||"";
+    document.getElementById("lg-dept").value = p.department||"";
+    document.getElementById("lg-position").value = p.position||"";
+    document.getElementById("lg-phone").value = p.phone||"";
+  }
+  function renderRecent(){
+    var a = loadRecent();
+    fillDatalist("dl-name", a.map(function(x){ return x.employeeName; }));
+    fillDatalist("dl-empid", a.map(function(x){ return x.employeeId; }));
+    fillDatalist("dl-position", a.map(function(x){ return x.position; }));
+    fillDatalist("dl-phone", a.map(function(x){ return x.phone; }));
+    var box = document.getElementById("lg-history"), chips = document.getElementById("lg-chips");
+    if(!box || !chips) return;
+    chips.innerHTML = "";
+    a.forEach(function(p){
+      var c = document.createElement("span"); c.className = "lg-chip";
+      var use = document.createElement("button"); use.type = "button"; use.textContent = (p.employeeName||"") + " · " + (p.employeeId||"");
+      use.addEventListener("click", function(){ applyRecent(p); });
+      var x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "✕"; x.setAttribute("aria-label", t("forgetEntry"));
+      x.addEventListener("click", function(){ storeRecent(loadRecent().filter(function(q){ return q.employeeId !== p.employeeId; })); renderRecent(); });
+      c.appendChild(use); c.appendChild(x); chips.appendChild(c);
+    });
+    box.hidden = a.length === 0;
+  }
+
+  // ---------------- staff (Marketing / IT) entry: hidden from regular employees ----------------
+  // Open with  #staff  on the link, or tap the logo / name bar 5 times quickly.
+  var STAFF_KEY = "autoclik_bh_staff_ok_v1", STAFF_TTL = 30*24*3600*1000;
+  function readStaffOk(){ try{ return JSON.parse(localStorage.getItem(STAFF_KEY)||"{}") || {}; }catch(e){ return {}; } }
+  function rememberStaff(k){ try{ var o = readStaffOk(); o[k] = Date.now()+STAFF_TTL; localStorage.setItem(STAFF_KEY, JSON.stringify(o)); }catch(e){} }
+  function forgetStaff(){ try{ localStorage.removeItem(STAFF_KEY); }catch(e){} }
+  function tryAutoUnlock(){
+    var o = readStaffOk(), now = Date.now();
+    if(o.mkt > now && !mktUnlocked) unlockMkt();
+    if(o.it > now && !itUnlocked) unlockIt();
+  }
+  function enterStaffMode(role){
+    staffMode = true;
+    document.body.classList.add("staff-mode");
+    document.body.classList.remove("onboard-intro-active", "onboard-at-login");
+    var ob = document.getElementById("emp-onboarding"); if(ob) ob.hidden = true;
+    showLoginOrApp();
+    selectRole(role || "marketing");
+    tryAutoUnlock();
+  }
+  function exitStaffMode(){
+    staffMode = false;
+    document.body.classList.remove("staff-mode");
+    forgetStaff();
+    mktUnlocked = false; itUnlocked = false;
+    ["mkt","it"].forEach(function(k){
+      var l = document.getElementById(k+"-lock"), a = document.getElementById(k+"-app"), pw = document.getElementById(k+"-pass"), rm = document.getElementById(k+"-remember");
+      if(l) l.hidden = false; if(a) a.hidden = true; if(pw) pw.value = ""; if(rm) rm.checked = false;
+    });
+    try{ if(location.hash) history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    selectRole("employee");
+    showLoginOrApp();
+  }
+  (function(){
+    var exitBtn = document.getElementById("staff-exit-btn");
+    if(exitBtn) exitBtn.addEventListener("click", exitStaffMode);
+    function secretTap(el){
+      if(!el) return;
+      var n = 0, t0 = 0;
+      el.addEventListener("click", function(){
+        var now = Date.now(); if(now - t0 > 3500) n = 0; t0 = now; n++;
+        if(n >= 5){ n = 0; enterStaffMode("marketing"); }
+      });
+    }
+    secretTap(document.getElementById("lp-logo"));
+    secretTap(document.getElementById("emp-profile-text"));
+    window.addEventListener("hashchange", function(){ if(/^#(staff|admin|backoffice)$/i.test(location.hash||"")) enterStaffMode("marketing"); });
+  })();
+
+  function renderProfileBar(){
+    if(!profile) return;
+    document.getElementById("emp-profile-text").innerHTML = '<b>'+escapeHtml(profile.employeeName)+'</b> · '+t("whoIdPrefix")+' '+escapeHtml(profile.employeeId)+' · '+escapeHtml(bLabel(profile.branch));
+  }
+  document.getElementById("login-form").addEventListener("submit", function(e){
+    e.preventDefault();
+    profile = {
+      employeeId: document.getElementById("lg-empid").value.trim(),
+      employeeName: document.getElementById("lg-name").value.trim(),
+      company: document.getElementById("lg-company").value.trim(),
+      branch: document.getElementById("lg-branch").value,
+      department: document.getElementById("lg-dept").value,
+      position: document.getElementById("lg-position").value.trim(),
+      phone: document.getElementById("lg-phone").value.trim()
+    };
+    saveProfile(profile);
+    var rmEl = document.getElementById("lg-remember");
+    if(!rmEl || rmEl.checked) saveRecent(profile);
+    showLoginOrApp();
+  });
+  document.getElementById("edit-profile-link").addEventListener("click", function(e){
+    e.preventDefault();
+    if(profile){
+      document.getElementById("lg-empid").value = profile.employeeId||"";
+      document.getElementById("lg-name").value = profile.employeeName||"";
+      setCompanyValue(profile.company);
+      document.getElementById("lg-branch").value = profile.branch||"";
+      document.getElementById("lg-dept").value = profile.department||"";
+      document.getElementById("lg-position").value = profile.position||"";
+      document.getElementById("lg-phone").value = profile.phone||"";
+    }
+    document.getElementById("emp-app").hidden = true;
+    document.getElementById("emp-login").hidden = false;
+  });
+  var logoutPending = false;
+  var logoutTimer = null;
+  function resetLogoutBtn(){
+    logoutPending = false;
+    if(logoutTimer){ clearTimeout(logoutTimer); logoutTimer = null; }
+    var btn = document.getElementById("logout-btn");
+    if(btn) btn.textContent = t("btnLogout");
+  }
+  function logout(){
+    var btn = document.getElementById("logout-btn");
+    if(!logoutPending){
+      logoutPending = true;
+      btn.textContent = t("logoutConfirmShort");
+      logoutTimer = setTimeout(resetLogoutBtn, 4000);
+      return;
+    }
+    resetLogoutBtn();
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    profile = null;
+    document.getElementById("report-success-card").hidden = true;
+    document.body.classList.remove("sheet-open");
+    document.getElementById("login-form").reset();
+    showLoginOrApp();
+  }
+  document.getElementById("logout-btn").addEventListener("click", logout);
+
+  // ---------------- segmented controls ----------------
+  function wireSeg(id){
+    var seg = document.getElementById(id);
+    var val = seg.querySelector('[aria-pressed="true"]').dataset.val;
+    seg.addEventListener("click", function(e){
+      var btn = e.target.closest("button"); if(!btn) return;
+      seg.querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed","false"); });
+      btn.setAttribute("aria-pressed","true"); val = btn.dataset.val;
+    });
+    return { get:function(){ return val; }, set:function(v){
+      seg.querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", b.dataset.val===v?"true":"false"); }); val = v;
+    }};
+  }
+  var typeSeg = wireSeg("type-seg");
+  var repeatSeg = wireSeg("repeat-seg");
+
+  // ---------------- db ----------------
+  var db = null;
+  var assetsCap = null;
+  var reports = [];
+  var reportsSettled = false;
+  var campaign = { name:"App Bug Hunter", tagline:"", startDate:"", endDate:"", testAppLink:"", announcement:"", faq:"", bugSubmissionOpen:true };
+  var awards = { finalized:false };
+
+  function renderAll(){
+    renderHeader(); renderProfileBar(); renderHome(); renderMyBugs(); renderRules();
+    renderMktDash(); renderMktReports(); renderMktParticipants(); renderAwards();
+    renderItList(); updateReportOpenState();
+  }
+
+  function renderHeader(){
+    document.getElementById("hero-title").textContent = campaign.name || "App Bug Hunter";
+    document.getElementById("hero-tagline").textContent = campaign.tagline || t("heroTaglineDefault");
+    var meta = document.getElementById("hero-meta");
+    var parts = [];
+    if(campaign.startDate && campaign.endDate){
+      parts.push('<div>'+t("heroPeriod")+'<b>'+campaign.startDate+' – '+campaign.endDate+'</b></div>');
+      var days = daysLeft();
+      if(days !== null) parts.push('<div>'+t("heroLeft")+'<b>'+(days>=0? days+" "+t("daysUnit") : t("ended"))+'</b></div>');
+    }
+    meta.innerHTML = parts.join("");
+  }
+  function daysLeft(){
+    if(!campaign.endDate) return null;
+    var end = new Date(campaign.endDate+"T23:59:59"); var now = new Date();
+    return Math.ceil((end - now) / 86400000);
+  }
+  function progressPct(){
+    if(!campaign.startDate || !campaign.endDate) return 0;
+    var s = new Date(campaign.startDate).getTime(), e = new Date(campaign.endDate).getTime(), n = Date.now();
+    if(e<=s) return 0;
+    return Math.max(0, Math.min(100, Math.round((n-s)/(e-s)*100)));
+  }
+
+  function renderHome(){
+    if(!profile) return;
+    document.getElementById("home-who").textContent = profile.employeeName + " · " + t("whoIdPrefix") + " " + profile.employeeId + " · " + bLabel(profile.branch);
+    document.getElementById("home-announce").innerHTML = campaign.announcement ? '<div class="announce">📣 '+escapeHtml(campaign.announcement)+'</div>' : "";
+
+    var mine = reports.filter(function(r){ return sameId(r.employeeId, profile.employeeId); });
+    var total = mine.length;
+    var verified = mine.filter(function(r){ return r.status==="verified"||r.status==="fixed"; }).length;
+    var reviewing = mine.filter(function(r){ return r.status==="pending"||r.status==="reviewing"; }).length;
+    var duplicate = mine.filter(function(r){ return r.status==="duplicate"; }).length;
+    var insight = mine.filter(function(r){ return r.type==="insight"; }).length;
+    document.getElementById("home-hero-total").textContent = total;
+    var heroBadge = document.getElementById("home-hero-badge");
+    heroBadge.textContent = "✅ " + verified + " " + t("statVerified");
+    heroBadge.classList.toggle("is-muted", verified===0);
+    document.getElementById("home-stats").innerHTML =
+      statTileHTML("✅","good",t("statVerified"),verified) +
+      statTileHTML("⏳","warn",t("statReviewing"),reviewing) +
+      statTileHTML("🔁","muted",t("statDuplicate"),duplicate) +
+      statTileHTML("💡","insight",t("statInsight"),insight);
+
+    var days = daysLeft();
+    document.getElementById("home-progress-text").textContent = campaign.startDate && campaign.endDate
+      ? (days!==null && days>=0 ? t("progressDaysLeft")(days) : t("progressEnded"))
+      : t("progressNoDates");
+    document.getElementById("home-progress-fill").style.width = progressPct()+"%";
+
+    var participants = {}; reports.forEach(function(r){ participants[r.employeeId]=1; });
+    var verifiedAll = reports.filter(function(r){ return r.status==="verified"||r.status==="fixed"; }).length;
+    var fixedAll = reports.filter(function(r){ return r.status==="fixed"; }).length;
+    document.getElementById("home-campaign-stats").innerHTML =
+      statTileHTML("👥","",t("campParticipants"),Object.keys(participants).length) +
+      statTileHTML("✅","good",t("campVerified"),verifiedAll) +
+      statTileHTML("🔧","fixed",t("campFixed"),fixedAll);
+  }
+
+  function updateReportOpenState(){
+    var open = campaign.bugSubmissionOpen !== false;
+    document.getElementById("report-closed-card").hidden = open;
+    document.getElementById("report-form-card").hidden = !open;
+  }
+
+  function renderMyBugs(){
+    if(!profile) return;
+    document.getElementById("mybugs-who").textContent = profile.employeeName + " · " + t("whoIdPrefix") + " " + profile.employeeId + " · " + bLabel(profile.branch);
+    var mine = reports.filter(function(r){ return sameId(r.employeeId, profile.employeeId); }).sort(function(a,b){ return b.createdAt - a.createdAt; });
+    var body = document.getElementById("mybugs-list");
+    if(!mine.length){ body.innerHTML = '<p class="empty-note">'+(reportsSettled ? t("mybugsEmpty") : t("dataLoading"))+'</p>'; return; }
+    body.innerHTML = mine.map(function(r){
+      return '<div class="report '+accClass(r.status)+'"><div class="report-top"><div>' +
+        '<div class="report-id mono">'+bugCode(r.id)+'</div>' +
+        '<div class="report-title">'+escapeHtml(r.title)+'</div>' +
+        '<div class="report-meta">'+mLabel(r.module)+' · '+fmtDate(r.createdAt)+'</div>' +
+        '</div><div class="report-tags"><span class="pill '+r.status+'">'+sLabel(r.status)+'</span></div></div></div>';
+    }).join("");
+  }
+
+  function renderRules(){
+    document.getElementById("rules-period").textContent = campaign.startDate && campaign.endDate ? t("rulesPeriodPrefix")+" "+campaign.startDate+" – "+campaign.endDate : "";
+    var faqText = campaign.faq || t("defaultFaq");
+    var lines = faqText.split("\n").map(function(l){ return l.trim(); }).filter(Boolean);
+    var html = lines.map(function(l){
+      var parts = l.split("|"); var q = (parts[0]||"").trim(), a = (parts[1]||"").trim();
+      return '<div style="margin-bottom:12px;"><div style="font-weight:700; font-size:13px;">Q: '+escapeHtml(q)+'</div><div style="font-size:13px; color:var(--ink-soft); margin-top:2px;">A: '+escapeHtml(a)+'</div></div>';
+    }).join("");
+    document.getElementById("faq-list").innerHTML = html || '<p class="empty-note">'+t("noData")+'</p>';
+  }
+
+  // ---------------- photo attach (up to MAX_PHOTOS) ----------------
+  var MAX_PHOTOS = 10;
+  var pendingPhotos = []; // [{id, url}]
+  function renderPhotoPreview(){
+    var grid = document.getElementById("photo-preview-grid");
+    var empty = document.getElementById("photo-drop-empty");
+    grid.innerHTML = pendingPhotos.map(function(p,i){
+      return '<div class="photo-thumb"><img src="'+escapeHtml(p.url)+'" alt=""><button type="button" data-i="'+i+'" aria-label="remove">×</button></div>';
+    }).join("");
+    empty.hidden = pendingPhotos.length >= MAX_PHOTOS;
+    Array.prototype.forEach.call(grid.querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ pendingPhotos.splice(parseInt(b.dataset.i,10),1); renderPhotoPreview(); });
+    });
+  }
+  function resetPhotoField(){
+    pendingPhotos = [];
+    document.getElementById("f-photo-input").value = "";
+    renderPhotoPreview();
+    var s = document.getElementById("photo-upload-status");
+    s.className="status-msg"; s.textContent="";
+  }
+  function uploadPhotoFiles(fileList){
+    var statusEl = document.getElementById("photo-upload-status");
+    var all = Array.prototype.slice.call(fileList||[]);
+    if(!all.length) return;
+    if(!assetsCap){ statusEl.className="status-msg err"; statusEl.textContent=t("photoNoCapability"); return; }
+    var images = all.filter(function(f){ return /^image\//.test(f.type); });
+    if(!images.length){ statusEl.className="status-msg err"; statusEl.textContent=t("photoNotImage"); return; }
+    var room = MAX_PHOTOS - pendingPhotos.length;
+    if(room<=0){ statusEl.className="status-msg err"; statusEl.textContent=t("photoMaxReached"); return; }
+    var overflow = images.length > room;
+    images = images.slice(0, room);
+    statusEl.className="status-msg"; statusEl.textContent=t("photoUploading");
+    Promise.all(images.map(function(f){
+      return assetsCap.upload(f).then(function(res){ pendingPhotos.push({id:res.id, url:res.url}); return null; }).catch(function(err){ return err; });
+    })).then(function(errs){
+      renderPhotoPreview();
+      var firstErr = errs.filter(Boolean)[0];
+      if(firstErr){ statusEl.className="status-msg err"; statusEl.textContent = (firstErr.code==="too_large") ? t("photoTooLarge") : t("photoUploadFail"); }
+      else if(overflow){ statusEl.className="status-msg err"; statusEl.textContent = t("photoMaxReached"); }
+      else { statusEl.className="status-msg ok"; statusEl.textContent = t("photoReady"); }
+    });
+  }
+  document.getElementById("photo-pick-btn").addEventListener("click", function(){ document.getElementById("f-photo-input").click(); });
+  document.getElementById("f-photo-input").addEventListener("change", function(e){ uploadPhotoFiles(e.target.files); });
+  var photoDrop = document.getElementById("photo-drop");
+  photoDrop.setAttribute("tabindex","0");
+  photoDrop.addEventListener("dragover", function(e){ e.preventDefault(); photoDrop.classList.add("drag"); });
+  photoDrop.addEventListener("dragleave", function(){ photoDrop.classList.remove("drag"); });
+  photoDrop.addEventListener("drop", function(e){
+    e.preventDefault(); photoDrop.classList.remove("drag");
+    if(e.dataTransfer && e.dataTransfer.files) uploadPhotoFiles(e.dataTransfer.files);
+  });
+  document.addEventListener("paste", function(e){
+    if(photoDrop.offsetParent === null) return; // report form not visible
+    var items = (e.clipboardData || window.clipboardData) ? (e.clipboardData || window.clipboardData).items : null;
+    if(!items) return;
+    var files = [];
+    for(var i=0;i<items.length;i++){
+      if(items[i].type && items[i].type.indexOf("image")===0) files.push(items[i].getAsFile());
+    }
+    if(files.length){ uploadPhotoFiles(files); e.preventDefault(); }
+  });
+
+  // ---------------- guided report-form progress (Marker.io/BugHerd-style step feedback) ----------------
+  function updateReportProgress(){
+    var steps = document.querySelectorAll("#report-form .form-step");
+    var doneCount = 0;
+    steps.forEach(function(step, idx){
+      var isDone;
+      if(idx===0) isDone = !!document.getElementById("f-module").value;
+      else if(idx===1) isDone = document.getElementById("f-desc").value.trim().length > 0;
+      else if(idx===2) isDone = pendingPhotos.length>0 || document.getElementById("f-link").value.trim().length>0 || document.getElementById("f-devicemodel").value.trim().length>0;
+      else isDone = document.getElementById("f-desc").value.trim().length > 0 && !!document.getElementById("f-module").value;
+      step.classList.toggle("is-done", !!isDone);
+      if(isDone) doneCount++;
+    });
+    var pct = Math.round((doneCount/steps.length)*100);
+    var fill = document.getElementById("report-progress-fill");
+    var label = document.getElementById("report-progress-label");
+    if(fill) fill.style.width = pct+"%";
+    if(label) label.textContent = t("reportProgressLabel")(doneCount, steps.length);
+  }
+  ["f-module","f-desc","f-steps","f-os","f-devicemodel","f-appver","f-link"].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.addEventListener("input", updateReportProgress);
+    if(el) el.addEventListener("change", updateReportProgress);
+  });
+  document.getElementById("type-seg").addEventListener("click", updateReportProgress);
+  document.getElementById("photo-drop").addEventListener("click", function(){ setTimeout(updateReportProgress, 300); });
+  document.getElementById("f-photo-input").addEventListener("change", function(){ setTimeout(updateReportProgress, 300); });
+
+  document.getElementById("report-form").addEventListener("submit", function(e){
+    e.preventDefault();
+    var statusEl = document.getElementById("submit-status");
+    statusEl.className = "status-msg"; statusEl.textContent = "";
+    var module = document.getElementById("f-module").value;
+    var desc = document.getElementById("f-desc").value.trim();
+    if(!profile){ statusEl.className="status-msg err"; statusEl.textContent=t("errFillAll"); return; }
+    if(!module || !desc){ statusEl.className="status-msg err"; statusEl.textContent=t("errRequired"); return; }
+    if(!db){ statusEl.className="status-msg err"; statusEl.textContent=t("errNotReady"); return; }
+
+    var type = typeSeg.get();
+    var payload = {
+      type: type, module: module,
+      title: (type==="bug"?"[Bug] ":"[Insight] ") + mLabel(module) + " — " + desc.slice(0,60),
+      desc: desc, steps: document.getElementById("f-steps").value.trim(),
+      os: document.getElementById("f-os").value, deviceModel: document.getElementById("f-devicemodel").value.trim(),
+      appVersion: document.getElementById("f-appver").value.trim(), link: document.getElementById("f-link").value.trim(),
+      photos: pendingPhotos.map(function(p){ return p.id; }),
+      repeatCheck: repeatSeg.get(), status: "pending", impact: null, duplicateOf: "", itNote: "",
+      employeeId: profile.employeeId, employeeName: profile.employeeName,
+      company: profile.company, branch: profile.branch, department: profile.department, position: profile.position, phone: profile.phone,
+      createdAt: Date.now()
+    };
+
+    var btn = document.getElementById("submit-btn"); btn.disabled = true;
+    db.collection("reports").add(payload).then(function(ref){
+      // optimistic local update: show it immediately without waiting for the realtime round-trip
+      if(!reports.some(function(r){ return r.id===ref.id; })){
+        var local = Object.assign({}, payload); local.id = ref.id;
+        reports = [local].concat(reports);
+        renderAll();
+      }
+      document.getElementById("report-form-card").hidden = true;
+      document.getElementById("report-success-card").hidden = false;
+      document.body.classList.add("sheet-open");
+      document.getElementById("success-code").textContent = bugCode(ref.id);
+      document.getElementById("report-form").reset();
+      typeSeg.set("bug"); repeatSeg.set("again"); resetPhotoField(); updateReportProgress();
+    }).catch(function(err){
+      statusEl.className = "status-msg err";
+      statusEl.textContent = t("errSubmitFail") + " (" + (err && err.code ? err.code : "unknown") + ")";
+    }).finally(function(){ btn.disabled = false; });
+  });
+  document.getElementById("success-again-btn").addEventListener("click", function(){
+    document.getElementById("report-success-card").hidden = true;
+    document.body.classList.remove("sheet-open");
+    document.getElementById("report-form-card").hidden = campaign.bugSubmissionOpen===false;
+  });
+  document.getElementById("success-mybugs-btn").addEventListener("click", function(){
+    document.getElementById("report-success-card").hidden = true;
+    document.body.classList.remove("sheet-open");
+    document.getElementById("report-form-card").hidden = campaign.bugSubmissionOpen===false;
+    selectEmpTab("mybugs");
+  });
+
+  // ============ MARKETING ============
+  var mktUnlocked = false;
+  function unlockMkt(){ mktUnlocked = true; document.getElementById("mkt-lock").hidden = true; document.getElementById("mkt-app").hidden = false; renderAll(); }
+  document.getElementById("mkt-unlock-btn").addEventListener("click", function(){
+    if(document.getElementById("mkt-pass").value.trim() === MKT_PASSCODE){
+      var rm = document.getElementById("mkt-remember"); if(rm && rm.checked) rememberStaff("mkt");
+      unlockMkt();
+    } else { document.getElementById("mkt-lock-msg").textContent = t("errWrongPass"); }
+  });
+  document.getElementById("mkt-pass").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); document.getElementById("mkt-unlock-btn").click(); } });
+  var mktTabs = [
+    {btn:"tabbtn-mkt-dash", panel:"panel-mkt-dash"}, {btn:"tabbtn-mkt-reports", panel:"panel-mkt-reports"},
+    {btn:"tabbtn-mkt-participants", panel:"panel-mkt-participants"}, {btn:"tabbtn-mkt-awards", panel:"panel-mkt-awards"}, {btn:"tabbtn-mkt-settings", panel:"panel-mkt-settings"}
+  ];
+  mktTabs.forEach(function(tt){
+    document.getElementById(tt.btn).addEventListener("click", function(){
+      mktTabs.forEach(function(x){
+        var sel = x.panel===tt.panel;
+        document.getElementById(x.btn).setAttribute("aria-selected", sel?"true":"false");
+        document.getElementById(x.panel).hidden = !sel;
+      });
+    });
+  });
+
+  function renderMktDash(){
+    if(!mktUnlocked) return;
+    var total = reports.length;
+    var verified = reports.filter(function(r){ return r.status==="verified"||r.status==="fixed"; }).length;
+    var dup = reports.filter(function(r){ return r.status==="duplicate"; }).length;
+    var sug = reports.filter(function(r){ return r.type==="insight"; }).length;
+    var todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    var today = reports.filter(function(r){ return r.createdAt >= todayStart.getTime(); }).length;
+    var participants = {}; reports.forEach(function(r){ participants[r.employeeId]=1; });
+    document.getElementById("mkt-dash-stats").innerHTML =
+      statTileHTML("👥","",t("statParticipants"),Object.keys(participants).length) +
+      statTileHTML("🐞","",t("statTotalReports"),total) +
+      statTileHTML("✅","good",t("statVerified"),verified) +
+      statTileHTML("🔁","muted",t("statDuplicate"),dup) +
+      statTileHTML("💡","insight",t("statInsight"),sug) +
+      statTileHTML("📅","info",t("statToday"),today);
+
+    function groupBars(labelFn, keyFn, containerId){
+      var counts = {};
+      reports.forEach(function(r){ var k=keyFn(r); counts[k]=(counts[k]||0)+1; });
+      var keys = Object.keys(counts);
+      var max = Math.max(1, keys.length ? Math.max.apply(null, keys.map(function(k){ return counts[k]; })) : 0);
+      var rows = keys.sort(function(a,b){ return counts[b]-counts[a]; });
+      var el = document.getElementById(containerId);
+      if(!rows.length){ el.innerHTML = '<p class="empty-note">'+t("noData")+'</p>'; return; }
+      el.innerHTML = rows.map(function(k){
+        var v = counts[k];
+        return '<div class="bar-row"><div class="lbl">'+escapeHtml(labelFn(k))+'</div><div class="bar-track"><div class="bar-fill" style="width:'+(v/max*100)+'%"></div></div><div class="bar-val mono">'+v+'</div></div>';
+      }).join("");
+    }
+    groupBars(function(k){ return bLabel(k); }, function(r){ return r.branch||"other"; }, "mkt-dash-branch");
+    groupBars(function(k){ return dLabel(k); }, function(r){ return r.department||"other"; }, "mkt-dash-dept");
+  }
+
+  function reportPhotosHTML(r){
+    var ids = (r.photos && r.photos.length) ? r.photos : (r.photo ? [r.photo] : []);
+    if(!ids.length) return "";
+    return '<div class="report-photo">' + ids.map(function(id){
+      var src = "/_blob/"+encodeURIComponent(id);
+      return '<a href="'+src+'" target="_blank" rel="noopener"><img src="'+src+'" alt="" loading="lazy"></a>';
+    }).join("") + '</div>';
+  }
+  function reportCardInner(r){
+    return '<div class="report-top"><div>' +
+      '<div class="report-id mono">'+bugCode(r.id)+'</div>' +
+      '<div class="report-title">'+escapeHtml(r.title)+'</div>' +
+      '<div class="report-meta">'+escapeHtml(r.employeeName||"")+' · '+bLabel(r.branch)+' · '+dLabel(r.department)+' · '+escapeHtml(r.os||"")+' · '+fmtDate(r.createdAt)+'</div>' +
+      '</div><div class="report-tags">' +
+        '<span class="pill '+r.type+'">'+typeLabel(r.type)+'</span>' +
+        '<span class="pill '+r.status+'">'+sLabel(r.status)+'</span>' +
+        (r.impact ? '<span class="pill bug">'+t("impactPrefix")+' '+iLabel(r.impact)+'</span>' : '') +
+      '</div></div>' +
+      '<div class="report-desc">'+escapeHtml(r.desc)+'</div>' +
+      (r.steps ? '<div class="report-desc"><strong>'+t("lblSteps")+'</strong> '+escapeHtml(r.steps)+'</div>' : '') +
+      reportPhotosHTML(r) +
+      (safeLink(r.link) ? '<div class="report-meta"><a href="'+escapeHtml(safeLink(r.link))+'" target="_blank" rel="noopener">'+t("evidenceLink")+'</a></div>' : '') +
+      (r.duplicateOf ? '<div class="report-meta">'+t("dupOfLabel")+' '+escapeHtml(r.duplicateOf)+'</div>' : '') +
+      (r.itNote ? '<div class="report-meta">'+t("itNoteLabel")+' '+escapeHtml(r.itNote)+'</div>' : '');
+  }
+  function reportCardHTML(r){
+    return '<div class="report '+accClass(r.status)+'">' + reportCardInner(r) + '</div>';
+  }
+
+  function renderMktReports(){
+    if(!mktUnlocked) return;
+    var sf = document.getElementById("mf-status").value, bf = document.getElementById("mf-branch").value;
+    var df = document.getElementById("mf-dept").value;
+    var of = document.getElementById("mf-os").value, tf = document.getElementById("mf-type").value;
+    var filtered = reports.filter(function(r){ return (!sf||r.status===sf) && (!bf||r.branch===bf) && (!df||r.department===df) && (!of||r.os===of) && (!tf||r.type===tf); })
+      .sort(function(a,b){ return b.createdAt-a.createdAt; });
+    var body = document.getElementById("mkt-reports-list");
+    body.innerHTML = filtered.length ? filtered.map(reportCardHTML).join("") : '<p class="empty-note">'+t("noMatch")+'</p>';
+  }
+  ["mf-status","mf-branch","mf-dept","mf-os","mf-type"].forEach(function(id){ document.getElementById(id).addEventListener("change", renderMktReports); });
+
+  function renderMktParticipants(){
+    if(!mktUnlocked) return;
+    var map = {};
+    reports.forEach(function(r){
+      var k = r.employeeId; if(!k) return;
+      if(!map[k]) map[k] = {name:r.employeeName, branch:r.branch, company:r.company, department:r.department, count:0, verified:0};
+      map[k].count++; if(r.status==="verified"||r.status==="fixed") map[k].verified++;
+    });
+    var rows = Object.keys(map).map(function(k){ return map[k]; }).sort(function(a,b){ return b.count-a.count; });
+    var body = document.getElementById("mkt-participants-list");
+    if(!rows.length){ body.innerHTML = '<p class="empty-note">'+t("noParticipants")+'</p>'; return; }
+    body.innerHTML = rows.map(function(p){
+      return '<div class="report"><div class="report-top"><div>' +
+        '<div class="report-title">'+escapeHtml(p.name)+'</div>' +
+        '<div class="report-meta">'+bLabel(p.branch)+' · '+dLabel(p.department)+'</div>' +
+        '</div><div class="report-tags"><span class="pill bug">'+p.count+' '+t("reportsCountSuffix")+'</span><span class="pill verified">'+p.verified+' '+t("verifiedCountSuffix")+'</span></div></div></div>';
+    }).join("");
+  }
+
+  function computeAwardCandidates(){
+    var hunterCount = {}, activeCount = {};
+    reports.forEach(function(r){
+      if(!r.employeeId) return;
+      activeCount[r.employeeId] = (activeCount[r.employeeId]||0)+1;
+      if(r.type==="bug" && (r.status==="verified"||r.status==="fixed")) hunterCount[r.employeeId] = (hunterCount[r.employeeId]||0)+1;
+    });
+    function topOf(map){ var keys = Object.keys(map).sort(function(a,b){ return map[b]-map[a]; }); return keys.length ? {employeeId:keys[0], score:map[keys[0]]} : null; }
+    var hunterTop = topOf(hunterCount), activeTop = topOf(activeCount);
+    var impactCandidates = reports.filter(function(r){ return r.type==="bug" && r.impact==="high" && (r.status==="verified"||r.status==="fixed"); }).sort(function(a,b){ return b.createdAt-a.createdAt; });
+    var insightCandidates = reports.filter(function(r){ return r.type==="insight"; });
+    function nameOf(empId){ var r = reports.find(function(x){ return x.employeeId===empId; }); return r ? r.employeeName : empId; }
+    return {
+      hunter: hunterTop ? {id:hunterTop.employeeId, name:nameOf(hunterTop.employeeId), score:hunterTop.score} : null,
+      active: activeTop ? {id:activeTop.employeeId, name:nameOf(activeTop.employeeId), score:activeTop.score} : null,
+      impactCandidates: impactCandidates, insightCandidates: insightCandidates
+    };
+  }
+
+  function renderAwards(){
+    if(!mktUnlocked) return;
+    var cand = computeAwardCandidates();
+    var body = document.getElementById("award-body"), banner = document.getElementById("award-finalized-banner");
+    var finalizeBtn = document.getElementById("finalize-btn"), reopenBtn = document.getElementById("reopen-award-btn");
+
+    if(awards.finalized){
+      banner.innerHTML = '<div class="notice-box" style="background:var(--good-soft); color:var(--good);">'+t("finalizedBanner")+'</div>';
+      finalizeBtn.hidden = true; reopenBtn.hidden = false;
+    } else { banner.innerHTML = ""; finalizeBtn.hidden = false; reopenBtn.hidden = true; }
+
+    var employees = Array.from(new Set(reports.map(function(r){ return r.employeeId; }).filter(Boolean)))
+      .map(function(id){ var r = reports.find(function(x){ return x.employeeId===id; }); return {id:id, name:r.employeeName}; });
+
+    function empSelect(fieldName, current){
+      return '<select id="award-'+fieldName+'" '+(awards.finalized?"disabled":"")+'>' +
+        '<option value="">'+t("selectWinnerPh")+'</option>' +
+        employees.map(function(e){ return '<option value="'+e.id+'"'+(current===e.id?" selected":"")+'>'+escapeHtml(e.name)+'</option>'; }).join("") + '</select>';
+    }
+    function reportSelect(fieldName, current, list){
+      return '<select id="award-'+fieldName+'" '+(awards.finalized?"disabled":"")+'>' +
+        '<option value="">'+t("selectReportPh")+'</option>' +
+        list.map(function(r){ return '<option value="'+r.id+'"'+(current===r.id?" selected":"")+'>'+bugCode(r.id)+' — '+escapeHtml(r.title)+'</option>'; }).join("") + '</select>';
+    }
+
+    var r = awards.results || {};
+    body.innerHTML =
+      '<div class="award-card"><h3>'+t("award1tt")+'</h3>' +
+        '<p class="suggest">'+t("suggestPrefix")+' '+(cand.hunter?escapeHtml(cand.hunter.name)+' ('+cand.hunter.score+' '+t("bugsUnit")+')':t("noDataAward"))+'</p>' +
+        empSelect("bugHunter", (r.bugHunter&&r.bugHunter.employeeId)||"") + '</div>' +
+      '<div class="award-card"><h3>'+t("award2tt")+'</h3>' +
+        '<p class="suggest">'+t("impactListLabel")(cand.impactCandidates.length)+'</p>' +
+        reportSelect("highestImpact", (r.highestImpact&&r.highestImpact.reportId)||"", cand.impactCandidates) + '</div>' +
+      '<div class="award-card"><h3>'+t("award3tt")+'</h3>' +
+        '<p class="suggest">'+t("suggestPrefix")+' '+(cand.active?escapeHtml(cand.active.name)+' ('+cand.active.score+' '+t("statTotal")+')':t("noDataAward"))+'</p>' +
+        empSelect("mostActive", (r.mostActive&&r.mostActive.employeeId)||"") + '</div>' +
+      '<div class="award-card"><h3>'+t("award4tt")+'</h3>' +
+        '<p class="suggest">'+t("insightListLabel")(cand.insightCandidates.length)+'</p>' +
+        reportSelect("bestInsight", (r.bestInsight&&r.bestInsight.reportId)||"", cand.insightCandidates) + '</div>';
+  }
+
+  document.getElementById("finalize-btn").addEventListener("click", function(){
+    if(!db) return;
+    function empName(id){ var r = reports.find(function(x){ return x.employeeId===id; }); return r?r.employeeName:""; }
+    function repTitle(id){ var r = reports.find(function(x){ return x.id===id; }); return r?r.title:""; }
+    var bugHunterId = document.getElementById("award-bugHunter") ? document.getElementById("award-bugHunter").value : "";
+    var mostActiveId = document.getElementById("award-mostActive") ? document.getElementById("award-mostActive").value : "";
+    var impactId = document.getElementById("award-highestImpact") ? document.getElementById("award-highestImpact").value : "";
+    var insightId = document.getElementById("award-bestInsight") ? document.getElementById("award-bestInsight").value : "";
+    var payload = { finalized:true, finalizedAt:Date.now(), results:{
+      bugHunter: bugHunterId ? {employeeId:bugHunterId, employeeName:empName(bugHunterId)} : null,
+      mostActive: mostActiveId ? {employeeId:mostActiveId, employeeName:empName(mostActiveId)} : null,
+      highestImpact: impactId ? {reportId:impactId, title:repTitle(impactId)} : null,
+      bestInsight: insightId ? {reportId:insightId, title:repTitle(insightId)} : null
+    }};
+    var hint = document.getElementById("award-save-hint");
+    db.doc("settings/awards").set(payload).then(function(){ hint.className="status-msg ok"; hint.textContent=t("savedAward"); })
+      .catch(function(){ hint.className="status-msg err"; hint.textContent=t("saveFail"); });
+  });
+  document.getElementById("reopen-award-btn").addEventListener("click", function(){ if(db) db.doc("settings/awards").update({finalized:false}).catch(function(){}); });
+
+  function fillSettingsForm(){
+    document.getElementById("s-name").value = campaign.name||"";
+    document.getElementById("s-tagline").value = campaign.tagline||"";
+    document.getElementById("s-start").value = campaign.startDate||"";
+    document.getElementById("s-end").value = campaign.endDate||"";
+    document.getElementById("s-testlink").value = campaign.testAppLink||"";
+    document.getElementById("s-announce").value = campaign.announcement||"";
+    document.getElementById("s-faq").value = campaign.faq||"";
+    document.getElementById("s-open").checked = campaign.bugSubmissionOpen !== false;
+  }
+  document.getElementById("settings-form").addEventListener("submit", function(e){
+    e.preventDefault();
+    if(!db) return;
+    var hint = document.getElementById("settings-status");
+    var startVal = document.getElementById("s-start").value, endVal = document.getElementById("s-end").value;
+    if(startVal && endVal && endVal < startVal){
+      hint.className="status-msg err"; hint.textContent=t("dateRangeInvalid"); return;
+    }
+    var payload = {
+      name: document.getElementById("s-name").value.trim() || "App Bug Hunter",
+      tagline: document.getElementById("s-tagline").value.trim(),
+      startDate: startVal, endDate: endVal,
+      testAppLink: document.getElementById("s-testlink").value.trim(), announcement: document.getElementById("s-announce").value.trim(),
+      faq: document.getElementById("s-faq").value, bugSubmissionOpen: document.getElementById("s-open").checked
+    };
+    db.doc("settings/campaign").set(payload).then(function(){ hint.className="status-msg ok"; hint.textContent=t("savedSettings"); })
+      .catch(function(){ hint.className="status-msg err"; hint.textContent=t("saveFail"); });
+  });
+
+  document.getElementById("export-csv-btn").addEventListener("click", function(){
+    var statusEl = document.getElementById("export-status");
+    var cols = ["id","bugCode","type","status","module","title","desc","steps","os","deviceModel","appVersion","impact","duplicateOf","employeeName","employeeId","branch","department","company","createdAt"];
+    var lines = [cols.join(",")];
+    reports.forEach(function(r){
+      var row = cols.map(function(c){
+        var v = c==="bugCode" ? bugCode(r.id) : c==="createdAt" ? fmtDate(r.createdAt) : c==="branch" ? bLabel(r.branch) : c==="department" ? dLabel(r.department) : c==="module" ? mLabel(r.module) : c==="status" ? sLabel(r.status) : c==="impact" ? (r.impact?iLabel(r.impact):"") : c==="type" ? typeLabel(r.type) : (r[c]||"");
+        v = String(v).replace(/"/g,'""'); return '"'+v+'"';
+      });
+      lines.push(row.join(","));
+    });
+    var csv = lines.join("\r\n");
+    if(!window.claude || !window.claude.use){ statusEl.className="status-msg err"; statusEl.textContent=t("exportNoView"); return; }
+    window.claude.use("downloads").then(function(dl){
+      if(!dl){ statusEl.className="status-msg err"; statusEl.textContent=t("exportUnavailable"); return; }
+      dl.save({filename:"autoclik-bug-hunter-reports.csv", data:csv}).then(function(){ statusEl.className="status-msg ok"; statusEl.textContent=t("exportOk"); })
+        .catch(function(){ statusEl.className="status-msg err"; statusEl.textContent=t("exportFail"); });
+    });
+  });
+
+  // ============ IT ============
+  var itUnlocked = false;
+  function unlockIt(){ itUnlocked = true; document.getElementById("it-lock").hidden = true; document.getElementById("it-app").hidden = false; renderItList(); }
+  document.getElementById("it-unlock-btn").addEventListener("click", function(){
+    if(document.getElementById("it-pass").value.trim() === IT_PASSCODE){
+      var rm = document.getElementById("it-remember"); if(rm && rm.checked) rememberStaff("it");
+      unlockIt();
+    } else { document.getElementById("it-lock-msg").textContent = t("errWrongPass"); }
+  });
+  document.getElementById("it-pass").addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); document.getElementById("it-unlock-btn").click(); } });
+  document.getElementById("itf-status").addEventListener("change", renderItList);
+
+  function renderItList(){
+    if(!itUnlocked) return;
+    var sf = document.getElementById("itf-status").value;
+    var list = reports.slice().sort(function(a,b){ return b.createdAt-a.createdAt; });
+    if(sf) list = list.filter(function(r){ return r.status===sf; });
+    else list = list.filter(function(r){ return r.status==="pending"||r.status==="reviewing"; });
+    var body = document.getElementById("it-list");
+    if(!list.length){ body.innerHTML = '<p class="empty-note">'+t("noMatchIt")+'</p>'; return; }
+    body.innerHTML = list.map(function(r){
+      var impactSelect = '<div class="af-field"><span>'+t("itLabelImpact")+'</span><select data-field="impact" data-id="'+r.id+'"><option value="">'+t("impactPh")+'</option>' +
+        ["low","medium","high"].map(function(k){ return '<option value="'+k+'"'+(r.impact===k?" selected":"")+'>'+iLabel(k)+'</option>'; }).join("") + '</select></div>';
+      var statusSelect = '<div class="af-field"><span>'+t("itLabelStatus")+'</span><select data-field="status" data-id="'+r.id+'">' +
+        STATUS_ORDER.map(function(k){ return '<option value="'+k+'"'+(r.status===k?" selected":"")+'>'+sLabel(k)+'</option>'; }).join("") + '</select></div>';
+      var dupInput = '<div class="af-field"><span>'+t("itLabelDup")+'</span><input type="text" data-field="duplicateOf" data-id="'+r.id+'" placeholder="'+t("dupPh")+'" value="'+escapeHtml(r.duplicateOf||"")+'"></div>';
+      var noteInput = '<div class="af-field"><span>'+t("itLabelNote")+'</span><input type="text" data-field="itNote" data-id="'+r.id+'" placeholder="'+t("notePh")+'" value="'+escapeHtml(r.itNote||"")+'"></div>';
+      var actions = '<div class="af-actions"><span class="save-hint" data-hint="'+r.id+'"></span><button type="button" class="btn small" data-confirm="'+r.id+'">'+t("btnConfirmVerify")+'</button></div>';
+      return '<div class="report '+accClass(r.status)+'">' + reportCardInner(r) +
+        '<div class="admin-controls">'+statusSelect+impactSelect+dupInput+noteInput+actions+'</div></div>';
+    }).join("");
+
+    body.querySelectorAll("[data-confirm]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.dataset.confirm;
+        var card = btn.closest(".report");
+        var hint = body.querySelector('[data-hint="'+id+'"]');
+        if(!db){ if(hint) hint.textContent=t("notReadyHint"); return; }
+        var patch = {
+          status: card.querySelector('[data-field="status"]').value,
+          impact: card.querySelector('[data-field="impact"]').value || null,
+          duplicateOf: card.querySelector('[data-field="duplicateOf"]').value,
+          itNote: card.querySelector('[data-field="itNote"]').value
+        };
+        btn.disabled = true;
+        db.collection("reports").doc(id).update(patch).then(function(){
+          if(hint){ hint.textContent=t("savedHint"); setTimeout(function(){ hint.textContent=""; },2000); }
+        }).catch(function(){ if(hint) hint.textContent=t("saveFailHint"); }).finally(function(){ btn.disabled=false; });
+      });
+    });
+  }
+
+  // ---------------- boot ----------------
+  function showSyncBanner(msg){
+    var el = document.getElementById("sync-status-banner");
+    if(!el) return;
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+  function hideSyncBanner(){
+    var el = document.getElementById("sync-status-banner");
+    if(!el) return;
+    el.style.display = "none";
+  }
+  function boot(){
+    try{ var storedTheme = localStorage.getItem(THEME_KEY); applyTheme(storedTheme||"system"); }catch(e){ applyTheme("system"); }
+    try{ var storedLang = localStorage.getItem(LANG_KEY); if(storedLang==="en"||storedLang==="th") lang = storedLang; }catch(e){}
+    applyLanguage();
+    var lpLogo = document.getElementById("lp-logo"), brandLogo = document.querySelector(".brand-logo");
+    if(lpLogo && brandLogo) lpLogo.src = brandLogo.src;
+    onboardStep = 0; renderOnboard(); renderRecent();
+    if(/^#(staff|admin|backoffice)$/i.test(location.hash||"")){
+      enterStaffMode("marketing");
+    } else {
+      // everyone (new or returning) sees the intro first; after the last tap showLoginOrApp() sends returning users straight into the app
+      document.getElementById("emp-onboarding").hidden = false;
+      document.body.classList.add("onboard-intro-active");
+    }
+
+    if(!window.claude || !window.claude.use){ showSyncBanner(t("dbUnavailable")); return; }
+    window.claude.use("assets").then(function(a){ assetsCap = a; if(!a){ var s=document.getElementById("photo-upload-status"); if(s){ s.className="status-msg err"; s.textContent=t("photoNoCapability"); } } }).catch(function(){});
+    var dbReadyTimer = setTimeout(function(){ showSyncBanner(t("dbTimeout")); }, 9000);
+    window.claude.use("db").then(function(d){
+      clearTimeout(dbReadyTimer);
+      db = d;
+      if(!db){ showSyncBanner(t("dbUnavailable")); return; }
+      hideSyncBanner();
+      setTimeout(function(){ reportsSettled = true; renderAll(); }, 10000); // don't show "empty" forever if the store never sends a definitive snapshot
+      db.collection("reports").orderBy("createdAt","desc").limit(1000).onSnapshot(function(snap){
+        reports = snap.docs.map(function(doc){ var data = doc.data()||{}; data.id = doc.id; return data; });
+        if(!snap.metadata || !snap.metadata.fromCache) reportsSettled = true;
+        hideSyncBanner();
+        renderAll();
+      }, function(err){
+        console.error("reports sub error", err);
+        reportsSettled = true;
+        showSyncBanner(t("syncErrorPrefix")+" "+(err && err.code ? err.code : "unknown")+")");
+      });
+      db.doc("settings/campaign").onSnapshot(function(snap){
+        if(snap.exists){ var d2 = snap.data()||{}; campaign = Object.assign({}, campaign, d2); }
+        renderHeader(); renderHome(); renderRules(); updateReportOpenState(); fillSettingsForm();
+      }, function(err){ console.error("campaign sub error", err); });
+      db.doc("settings/awards").onSnapshot(function(snap){
+        awards = snap.exists ? Object.assign({finalized:false}, snap.data()) : {finalized:false};
+        renderAwards();
+      }, function(err){ console.error("awards sub error", err); });
+    }).catch(function(err){
+      clearTimeout(dbReadyTimer);
+      console.error("db use() rejected", err);
+      showSyncBanner(t("dbUnavailable"));
+    });
+  }
+  boot();
+})();
+</script>
